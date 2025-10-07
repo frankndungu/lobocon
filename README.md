@@ -67,12 +67,12 @@ Lobocon is a comprehensive, multi-tenant SaaS platform that streamlines construc
 
 - **Framework**: NestJS (TypeScript)
 - **Architecture**: Modular monolith
-- **API**: RESTful + GraphQL (optional)
+- **API**: RESTful + GraphQL
 
 ### Database & Storage
 
 - **Database**: PostgreSQL 15+
-- **ORM**: Prisma 5.x
+- **ORM**: TypeOrm 5.x
 - **File Storage**: AWS S3
 - **CDN**: CloudFront
 - **Caching**: Redis
