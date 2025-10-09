@@ -1,20 +1,27 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { KsmmClauseService } from './ksmm-clause.service';
 
 @Controller('clauses')
 export class KsmmClauseController {
   constructor(private readonly clauseService: KsmmClauseService) {}
 
+  /**
+   * GET /clauses
+   * Optionally supports search query ?search=term
+   */
   @Get()
   async getAll(@Query('search') search?: string) {
-    if (search) {
-      return this.clauseService.search(search);
-    }
-    return this.clauseService.findAll();
+    return search
+      ? await this.clauseService.search(search.trim())
+      : await this.clauseService.findAll();
   }
 
+  /**
+   * GET /clauses/:id
+   * Fetch single clause by ID
+   */
   @Get(':id')
-  async getOne(@Param('id') id: number) {
-    return this.clauseService.findOne(id);
+  async getOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.clauseService.findOne(id);
   }
 }
