@@ -9,6 +9,7 @@ export interface DatabaseConfig {
 }
 
 export default registerAs('database', (): DatabaseConfig => {
+  // Environment variables are already loaded by ConfigModule in app.module.ts
   const host = process.env.DB_HOST;
   const port = process.env.DB_PORT;
   const username = process.env.DB_USERNAME;

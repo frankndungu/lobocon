@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig, { DatabaseConfig } from './config/database.config';
+import { KsmmClauseModule } from './ksmm-clauses/ksmm-clause.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: join(__dirname, '../../../.env'),
+      // Use process.cwd() which points to where npm start is run from (apps/backend)
+      envFilePath: join(process.cwd(), '../../.env'),
       load: [databaseConfig],
     }),
 
@@ -27,12 +29,14 @@ import databaseConfig, { DatabaseConfig } from './config/database.config';
           username: dbConfig.username,
           password: dbConfig.password,
           database: dbConfig.database,
+          // Keep __dirname for entities as they're relative to compiled output
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
           logging: false,
         };
       },
     }),
+    KsmmClauseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
