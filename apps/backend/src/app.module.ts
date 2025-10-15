@@ -6,6 +6,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig, { DatabaseConfig } from './config/database.config';
 import { KsmmClauseModule } from './ksmm-clauses/ksmm-clause.module';
+import { BoqModule } from './boq/boq.module';
+import { ProjectModule } from './projects/project.module';
+import { BoqSummaryModule } from './boq/boq-summary.module';
 
 @Module({
   imports: [
@@ -37,6 +40,9 @@ import { KsmmClauseModule } from './ksmm-clauses/ksmm-clause.module';
       },
     }),
     KsmmClauseModule,
+    BoqModule,
+    BoqSummaryModule,
+    ProjectModule,
   ],
   controllers: [AppController],
   providers: [AppService],
