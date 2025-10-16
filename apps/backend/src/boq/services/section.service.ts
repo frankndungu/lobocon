@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Section } from '../entities/section.entity';
 import { Item } from '../entities/item.entity';
 import { Collection } from '../entities/collection.entity';
 import { Bill } from '../entities/bill.entity';
+import { ItemService } from './item.service';
 
 @Injectable()
 export class SectionService {

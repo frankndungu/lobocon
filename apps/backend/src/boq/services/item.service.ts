@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Item, ItemType } from '../entities/item.entity';
 import { Section } from '../entities/section.entity';
+import { SectionService } from './section.service';
 
 @Injectable()
 export class ItemService {
@@ -12,6 +13,9 @@ export class ItemService {
 
     @InjectRepository(Section)
     private readonly sectionRepo: Repository<Section>,
+
+    @Inject(forwardRef(() => SectionService))
+    private readonly sectionService: SectionService,
   ) {}
 
   // ✅ Get all items with enhanced filtering
@@ -160,7 +164,7 @@ export class ItemService {
     };
   }
 
-  // 🔧 Helper - Update section totals and item count
+  // 🔧 Helper - Update section totals and cascade to bill totals
   private async updateSectionTotals(section_id?: number): Promise<void> {
     if (!section_id) return;
 
@@ -170,5 +174,8 @@ export class ItemService {
       total_amount: totals.total_amount,
       item_count: totals.item_count,
     });
+
+    // 🆕 CASCADE: Use SectionService to recalculate totals (includes bill cascade)
+    await this.sectionService.recalculateTotals(section_id);
   }
 }
