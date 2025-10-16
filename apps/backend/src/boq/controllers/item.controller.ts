@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ItemService } from '../services/item.service'; // 🔄 Updated import path
 import { Item, ItemType } from '../entities/item.entity'; // 🔄 Updated import
+import { CreateItemDto } from '../dto/create-item.dto';
 
 @Controller('boq/items') // 🔄 Updated route - nested under BOQ module
 export class ItemController {
@@ -34,8 +35,8 @@ export class ItemController {
 
   // ✅ Create a new BOQ item
   @Post()
-  async create(@Body() data: Partial<Item>): Promise<Item> {
-    return this.itemService.create(data);
+  async create(@Body() createItemDto: CreateItemDto): Promise<Item> {
+    return this.itemService.create(createItemDto);
   }
 
   // ✅ Update a BOQ item

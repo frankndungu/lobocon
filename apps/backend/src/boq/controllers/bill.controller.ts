@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { BillService } from '../services/bill.service';
 import { Bill } from '../entities/bill.entity';
+import { CreateBillDto } from '../dto/create-bill.dto';
 
 @Controller('boq/bills') // Top-level BOQ bills endpoint
 export class BillController {
@@ -38,8 +39,8 @@ export class BillController {
 
   // ✅ Create a new bill
   @Post()
-  async create(@Body() data: Partial<Bill>): Promise<Bill> {
-    return this.billService.create(data);
+  async create(@Body() createBillDto: CreateBillDto): Promise<Bill> {
+    return this.billService.create(createBillDto);
   }
 
   // ✅ Update a bill
