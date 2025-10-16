@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { join } from 'path';
-import { KsmmClause } from './ksmm-clauses/entities/ksmm-clause.entity';
+import { KsmmClause } from '../ksmm-clauses/entities/ksmm-clause.entity';
 import { seedKsmmClauses } from './seeds/seed-ksmm';
 
 // Load environment variables from project root

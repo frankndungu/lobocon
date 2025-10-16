@@ -5,8 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import databaseConfig, { DatabaseConfig } from './config/database.config';
+
 import { KsmmClauseModule } from './ksmm-clauses/ksmm-clause.module';
 import { ProjectModule } from './projects/project.module';
+import { BoqModule } from './boq/boq.module';
 
 @Module({
   imports: [
@@ -32,12 +34,13 @@ import { ProjectModule } from './projects/project.module';
           database: dbConfig.database,
           // Keep __dirname for entities as they're relative to compiled output
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: true,
+          synchronize: false,
           logging: false,
         };
       },
     }),
     KsmmClauseModule,
+    BoqModule,
     ProjectModule,
   ],
   controllers: [AppController],

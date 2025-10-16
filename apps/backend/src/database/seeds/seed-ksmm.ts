@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { KsmmClause } from '../ksmm-clauses/entities/ksmm-clause.entity';
+import { KsmmClause } from '../../ksmm-clauses/entities/ksmm-clause.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 import csvParser from 'csv-parser';
