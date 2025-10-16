@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { KsmmClause } from '../entities/ksmm-clause.entity';
+import { KsmmClause } from './entities/ksmm-clause.entity';
 import { KsmmClauseService } from './ksmm-clause.service';
 import { KsmmClauseController } from './ksmm-clause.controller';
 

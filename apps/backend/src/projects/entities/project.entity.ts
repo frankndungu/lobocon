@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Boq } from './boq.entity';
-import { BoqSummary } from './boq-summary.entity';
+import { Bill } from '../../boq/entities/bill.entity'; // 🔄 Updated import
+import { Section } from '../../boq/entities/section.entity'; // 🔄 Updated import
+import { Item } from '../../boq/entities/item.entity'; // 🔄 Updated import
+import { Collection } from '../../boq/entities/collection.entity'; // 🆕 New import
 
 export enum ProjectType {
   RESIDENTIAL = 'RESIDENTIAL',
@@ -128,10 +130,20 @@ export class Project {
   })
   updatedAt: Date;
 
-  // Relations
-  @OneToMany(() => Boq, (boq) => boq.project)
-  boqItems: Boq[];
+  // 🔄 UPDATED BOQ Relations - New hierarchy structure
 
-  @OneToMany(() => BoqSummary, (summary) => summary.project)
-  boqSummaries: BoqSummary[];
+  // 🆕 Top-level BOQ relationship - Projects have Bills
+  @OneToMany(() => Bill, (bill) => bill.project)
+  bills: Bill[];
+
+  // 🔄 Keep direct relationships for easy querying without joins
+  @OneToMany(() => Section, (section) => section.project)
+  boqSections: Section[]; // 🔄 Renamed from boqSummaries
+
+  @OneToMany(() => Item, (item) => item.project)
+  boqItems: Item[]; // 🔄 Updated to reference Item instead of Boq
+
+  // 🆕 Collections relationship
+  @OneToMany(() => Collection, (collection) => collection.project)
+  collections: Collection[];
 }

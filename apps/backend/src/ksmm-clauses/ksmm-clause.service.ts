@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
-import { KsmmClause } from '../entities/ksmm-clause.entity';
+import { KsmmClause } from './entities/ksmm-clause.entity';
 
 @Injectable()
 export class KsmmClauseService {
