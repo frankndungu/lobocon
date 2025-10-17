@@ -1,5 +1,6 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { APP_PIPE, APP_FILTER } from '@nestjs/core';
+import { APP_PIPE, APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 import { join } from 'path';
@@ -17,10 +18,17 @@ import { BoqModule } from './boq/boq.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // Use process.cwd() which points to where npm start is run from (apps/backend)
       envFilePath: join(process.cwd(), '../../.env'),
       load: [databaseConfig],
     }),
+
+    // Add rate limiting configuration
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute per IP
+      },
+    ]),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -62,6 +70,11 @@ import { BoqModule } from './boq/boq.module';
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
+    },
+    // Global rate limiting guard
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })
