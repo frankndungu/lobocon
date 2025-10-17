@@ -12,6 +12,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import CreateSectionForm from "@/components/forms/CreateSectionForm";
+import CreateItemForm from "@/components/forms/CreateItemForm";
 
 interface Section {
   id: number;
@@ -52,6 +54,11 @@ export default function BillDetail() {
   const [expandedSections, setExpandedSections] = useState<Set<number>>(
     new Set()
   );
+  const [showCreateSectionForm, setShowCreateSectionForm] = useState(false);
+  const [showCreateItemForm, setShowCreateItemForm] = useState(false);
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(
+    null
+  );
 
   const { data: bill, isLoading } = useQuery({
     queryKey: ["bill-full", billId],
@@ -71,6 +78,16 @@ export default function BillDetail() {
       newExpanded.add(sectionId);
     }
     setExpandedSections(newExpanded);
+  };
+
+  const openItemForm = (sectionId: number) => {
+    setSelectedSectionId(sectionId);
+    setShowCreateItemForm(true);
+  };
+
+  const closeItemForm = () => {
+    setShowCreateItemForm(false);
+    setSelectedSectionId(null);
   };
 
   const getItemTypeBadge = (type: string) => {
@@ -140,7 +157,10 @@ export default function BillDetail() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Sections</h2>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <button
+            onClick={() => setShowCreateSectionForm(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
             <Plus className="w-4 h-4" />
             <span>Add Section</span>
           </button>
@@ -204,7 +224,13 @@ export default function BillDetail() {
                   <div className="p-4">
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-medium text-gray-900">Items</h4>
-                      <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center space-x-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openItemForm(section.id);
+                        }}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center space-x-1"
+                      >
                         <Plus className="w-3 h-3" />
                         <span>Add Item</span>
                       </button>
@@ -274,6 +300,25 @@ export default function BillDetail() {
           </div>
         )}
       </div>
+
+      {/* Create Section Modal */}
+      <CreateSectionForm
+        projectId={projectId}
+        billId={billId}
+        isOpen={showCreateSectionForm}
+        onClose={() => setShowCreateSectionForm(false)}
+      />
+
+      {/* Create Item Modal */}
+      {selectedSectionId && (
+        <CreateItemForm
+          projectId={projectId}
+          billId={billId}
+          sectionId={selectedSectionId}
+          isOpen={showCreateItemForm}
+          onClose={closeItemForm}
+        />
+      )}
     </div>
   );
 }
