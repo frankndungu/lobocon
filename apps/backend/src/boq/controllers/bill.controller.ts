@@ -12,6 +12,7 @@ import {
 import { BillService } from '../services/bill.service';
 import { Bill } from '../entities/bill.entity';
 import { CreateBillDto } from '../dto/create-bill.dto';
+import { UpdateBillDto } from '../dto/update-bill.dto';
 
 @Controller('boq/bills') // Top-level BOQ bills endpoint
 export class BillController {
@@ -47,9 +48,9 @@ export class BillController {
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() data: Partial<Bill>,
+    @Body() updateBillDto: UpdateBillDto,
   ): Promise<Bill | null> {
-    return this.billService.update(id, data);
+    return this.billService.update(id, updateBillDto);
   }
 
   // ✅ Delete a bill
