@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { CollectionService } from '../services/collection.service';
 import { Collection } from '../entities/collection.entity';
+import { CreateCollectionDto } from '../dto/create-collection.dto';
+import { UpdateCollectionDto } from '../dto/update-collection.dto';
 
 @Controller('boq/collections') // Collections endpoint
 export class CollectionController {
@@ -40,17 +42,19 @@ export class CollectionController {
 
   // ✅ Create a new collection
   @Post()
-  async create(@Body() data: Partial<Collection>): Promise<Collection> {
-    return this.collectionService.create(data);
+  async create(
+    @Body() createCollectionDto: CreateCollectionDto,
+  ): Promise<Collection> {
+    return this.collectionService.create(createCollectionDto);
   }
 
   // ✅ Update a collection
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() data: Partial<Collection>,
+    @Body() updateCollectionDto: UpdateCollectionDto,
   ): Promise<Collection | null> {
-    return this.collectionService.update(id, data);
+    return this.collectionService.update(id, updateCollectionDto);
   }
 
   // ✅ Delete a collection

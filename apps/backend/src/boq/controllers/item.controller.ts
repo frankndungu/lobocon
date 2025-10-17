@@ -12,6 +12,7 @@ import {
 import { ItemService } from '../services/item.service'; // 🔄 Updated import path
 import { Item, ItemType } from '../entities/item.entity'; // 🔄 Updated import
 import { CreateItemDto } from '../dto/create-item.dto';
+import { UpdateItemDto } from '../dto/update-item.dto';
 
 @Controller('boq/items') // 🔄 Updated route - nested under BOQ module
 export class ItemController {
@@ -43,9 +44,9 @@ export class ItemController {
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() data: Partial<Item>,
+    @Body() updateItemDto: UpdateItemDto,
   ): Promise<Item | null> {
-    return this.itemService.update(id, data);
+    return this.itemService.update(id, updateItemDto);
   }
 
   // ✅ Delete a BOQ item
