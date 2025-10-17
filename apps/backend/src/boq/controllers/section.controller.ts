@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { SectionService } from '../services/section.service'; // 🔄 Updated import path
 import { Section } from '../entities/section.entity'; // 🔄 Updated import
+import { CreateSectionDto } from '../dto/create-section.dto';
+import { UpdateSectionDto } from '../dto/update-section.dto';
 
 @Controller('boq/sections') // 🔄 Updated route - nested under BOQ module
 export class SectionController {
@@ -41,17 +43,17 @@ export class SectionController {
 
   // ✅ Create a new section
   @Post()
-  async create(@Body() data: Partial<Section>): Promise<Section> {
-    return this.sectionService.create(data);
+  async create(@Body() createSectionDto: CreateSectionDto): Promise<Section> {
+    return this.sectionService.create(createSectionDto);
   }
 
   // ✅ Update a section
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() data: Partial<Section>,
+    @Body() updateSectionDto: UpdateSectionDto,
   ): Promise<Section | null> {
-    return this.sectionService.update(id, data);
+    return this.sectionService.update(id, updateSectionDto);
   }
 
   // ✅ Delete a section
