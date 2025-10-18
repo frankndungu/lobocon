@@ -14,6 +14,8 @@ import {
 import { useState } from "react";
 import CreateSectionForm from "@/components/forms/CreateSectionForm";
 import CreateItemForm from "@/components/forms/CreateItemForm";
+import BillTotals from "@/components/ui/BillTotals";
+import { useCalculations } from "@/hooks/useCalculations";
 
 interface Section {
   id: number;
@@ -69,6 +71,13 @@ export default function BillDetail() {
       return response.data;
     },
   });
+
+  const calculations = useCalculations(
+    bill || {
+      sections: [],
+      contingency_percentage: 0,
+    }
+  );
 
   const toggleSection = (sectionId: number) => {
     const newExpanded = new Set(expandedSections);
@@ -139,16 +148,15 @@ export default function BillDetail() {
               </div>
             </div>
 
-            {/* Bill Totals */}
-            <div className="text-right">
-              <div className="text-3xl font-bold text-green-600">
-                KES {Number(bill.total_amount).toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-500">
-                Subtotal: KES {Number(bill.subtotal_amount).toLocaleString()} +
-                {bill.contingency_percentage}% contingency
-              </div>
-            </div>
+            {/* Enhanced Bill Totals */}
+            <BillTotals
+              subtotal={calculations.subtotal}
+              contingencyPercentage={bill.contingency_percentage}
+              contingencyAmount={calculations.contingencyAmount}
+              totalAmount={calculations.totalAmount}
+              sectionCount={calculations.sectionCount}
+              itemCount={calculations.itemCount}
+            />
           </div>
         </div>
       </div>
