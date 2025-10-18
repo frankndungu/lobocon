@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { X, Save } from "lucide-react";
+import { X, Save, BookOpen } from "lucide-react";
+import KSMMSearch from "@/components/ui/KSMMSearch";
 
 interface CreateItemFormProps {
   projectId: string;
@@ -22,6 +23,15 @@ interface CreateItemData {
   quantity: number;
   unit: string;
   rate: number;
+}
+
+interface KSMMClause {
+  id: number;
+  section_code: string;
+  section: string;
+  contents: string;
+  clause_title: string;
+  clause_reference: string;
 }
 
 const ITEM_TYPES = [
@@ -51,6 +61,8 @@ export default function CreateItemForm({
     rate: 0,
   });
 
+  const [useKSMM, setUseKSMM] = useState(false);
+
   const queryClient = useQueryClient();
 
   const createItemMutation = useMutation({
@@ -71,8 +83,18 @@ export default function CreateItemForm({
         unit: "",
         rate: 0,
       });
+      setUseKSMM(false);
     },
   });
+
+  const handleKSMMSelect = (clause: KSMMClause) => {
+    setFormData({
+      ...formData,
+      description: clause.clause_reference,
+      item_code: clause.section,
+    });
+    setUseKSMM(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,19 +154,37 @@ export default function CreateItemForm({
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium resize-none"
-                rows={3}
-                placeholder="Detailed description of the work item"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-900">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setUseKSMM(!useKSMM)}
+                  className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>{useKSMM ? "Manual Entry" : "Use KSMM"}</span>
+                </button>
+              </div>
+
+              {useKSMM ? (
+                <KSMMSearch
+                  onSelect={handleKSMMSelect}
+                  placeholder="Search KSMM clauses for professional descriptions..."
+                />
+              ) : (
+                <textarea
+                  required
+                  className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium resize-none"
+                  rows={3}
+                  placeholder="Detailed description of the work item"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
+              )}
             </div>
 
             <div>
