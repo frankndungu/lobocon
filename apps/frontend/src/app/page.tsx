@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Project } from "@/lib/types";
-import { Building, Calendar, MapPin, ArrowRight } from "lucide-react";
+import { Building, Calendar, MapPin, ArrowRight, Plus } from "lucide-react";
+import CreateProjectForm from "@/components/forms/CreateProjectForm";
 
 export default function ProjectSelection() {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
   const {
     data: projects,
     isLoading,
@@ -42,12 +46,23 @@ export default function ProjectSelection() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Lobocon BOQ Editor
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Select a project to manage its Bill of Quantities
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Lobocon BOQ Editor
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Select a project to manage its Bill of Quantities
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create New Project</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -110,12 +125,25 @@ export default function ProjectSelection() {
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               No projects found
             </h3>
-            <p className="text-gray-600">
-              Create a project in your backend to get started.
+            <p className="text-gray-600 mb-4">
+              Get started by creating your first project.
             </p>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 mx-auto transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Your First Project</span>
+            </button>
           </div>
         )}
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectForm
+        isOpen={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+      />
     </div>
   );
 }

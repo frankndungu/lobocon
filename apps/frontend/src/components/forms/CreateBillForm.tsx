@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { X, Save } from "lucide-react";
+
+// Add Bill interface to match your backend structure
+interface Bill {
+  id: number;
+  bill_number: string;
+  bill_title: string;
+  description?: string;
+  contingency_percentage: number;
+  total_amount?: number;
+  section_count?: number;
+  item_count?: number;
+}
 
 interface CreateBillFormProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
+  editingBill?: Bill | null;
 }
 
 interface CreateBillData {
@@ -19,10 +32,18 @@ interface CreateBillData {
   contingency_percentage: number;
 }
 
+interface UpdateBillData {
+  bill_number: string;
+  bill_title: string;
+  description: string;
+  contingency_percentage: number;
+}
+
 export default function CreateBillForm({
   projectId,
   isOpen,
   onClose,
+  editingBill,
 }: CreateBillFormProps) {
   const [formData, setFormData] = useState<CreateBillData>({
     project_id: projectId,
@@ -33,15 +54,65 @@ export default function CreateBillForm({
   });
 
   const queryClient = useQueryClient();
+  const isEditing = !!editingBill;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingBill) {
+      setFormData({
+        project_id: projectId,
+        bill_number: editingBill.bill_number,
+        bill_title: editingBill.bill_title,
+        description: editingBill.description || "",
+        contingency_percentage: editingBill.contingency_percentage,
+      });
+    } else {
+      // Reset form for create mode
+      setFormData({
+        project_id: projectId,
+        bill_number: "",
+        bill_title: "",
+        description: "",
+        contingency_percentage: 6.5,
+      });
+    }
+  }, [editingBill, projectId]);
 
   const createBillMutation = useMutation({
     mutationFn: async (data: CreateBillData) => {
-      const response = await api.post("/boq/bills", data);
-      return response.data;
+      if (isEditing && editingBill) {
+        // For updates, exclude project_id since it shouldn't change
+        const {
+          project_id,
+          ...updateData
+        }: { project_id: string; [key: string]: any } = data;
+
+        // Ensure contingency_percentage is a number
+        const updatePayload: UpdateBillData = {
+          ...updateData,
+          contingency_percentage: Number(updateData.contingency_percentage),
+        } as UpdateBillData;
+
+        const response = await api.patch(
+          `/boq/bills/${editingBill.id}`,
+          updatePayload
+        );
+        return response.data;
+      } else {
+        // For creates, ensure contingency_percentage is a number
+        const createPayload = {
+          ...data,
+          contingency_percentage: Number(data.contingency_percentage),
+        };
+
+        const response = await api.post("/boq/bills", createPayload);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bills", projectId] });
       onClose();
+      // Reset form
       setFormData({
         project_id: projectId,
         bill_number: "",
@@ -50,10 +121,33 @@ export default function CreateBillForm({
         contingency_percentage: 6.5,
       });
     },
+    onError: (error: any) => {
+      console.error("Error saving bill:", error);
+      alert(
+        `Failed to ${isEditing ? "update" : "create"} bill. ${
+          error.response?.data?.message || "Please try again."
+        }`
+      );
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.bill_number.trim()) {
+      alert("Bill number is required");
+      return;
+    }
+    if (!formData.bill_title.trim()) {
+      alert("Bill title is required");
+      return;
+    }
+    if (!formData.description.trim()) {
+      alert("Description is required");
+      return;
+    }
+
     createBillMutation.mutate(formData);
   };
 
@@ -65,7 +159,7 @@ export default function CreateBillForm({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            Create New Bill
+            {isEditing ? "Edit Bill" : "Create New Bill"}
           </h2>
           <button
             onClick={onClose}
@@ -144,7 +238,9 @@ export default function CreateBillForm({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    contingency_percentage: parseFloat(e.target.value) || 0,
+                    // Ensure it's converted to a number, not a string
+                    contingency_percentage:
+                      e.target.value === "" ? 0 : Number(e.target.value),
                   })
                 }
               />
@@ -167,7 +263,13 @@ export default function CreateBillForm({
             >
               <Save className="w-4 h-4" />
               <span>
-                {createBillMutation.isPending ? "Creating..." : "Create Bill"}
+                {createBillMutation.isPending
+                  ? isEditing
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditing
+                  ? "Update Bill"
+                  : "Create Bill"}
               </span>
             </button>
           </div>

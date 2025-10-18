@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { X, Save, BookOpen } from "lucide-react";
 import KSMMSearch from "@/components/ui/KSMMSearch";
+
+interface Item {
+  id: number;
+  item_code: string;
+  description: string;
+  item_type: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  amount: number;
+}
 
 interface CreateItemFormProps {
   projectId: string;
@@ -12,10 +23,21 @@ interface CreateItemFormProps {
   sectionId: number;
   isOpen: boolean;
   onClose: () => void;
+  editingItem?: Item | null;
 }
 
 interface CreateItemData {
   project_id: string;
+  section_id: number;
+  item_code: string;
+  description: string;
+  item_type: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+}
+
+interface UpdateItemData {
   section_id: number;
   item_code: string;
   description: string;
@@ -49,6 +71,7 @@ export default function CreateItemForm({
   sectionId,
   isOpen,
   onClose,
+  editingItem,
 }: CreateItemFormProps) {
   const [formData, setFormData] = useState<CreateItemData>({
     project_id: projectId,
@@ -62,13 +85,69 @@ export default function CreateItemForm({
   });
 
   const [useKSMM, setUseKSMM] = useState(false);
-
   const queryClient = useQueryClient();
+  const isEditing = !!editingItem;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingItem) {
+      setFormData({
+        project_id: projectId,
+        section_id: sectionId,
+        item_code: editingItem.item_code,
+        description: editingItem.description,
+        item_type: editingItem.item_type,
+        quantity: editingItem.quantity,
+        unit: editingItem.unit,
+        rate: editingItem.rate,
+      });
+    } else {
+      setFormData({
+        project_id: projectId,
+        section_id: sectionId,
+        item_code: "",
+        description: "",
+        item_type: "MEASURED",
+        quantity: 1,
+        unit: "",
+        rate: 0,
+      });
+    }
+    setUseKSMM(false);
+  }, [editingItem, projectId, sectionId]);
 
   const createItemMutation = useMutation({
     mutationFn: async (data: CreateItemData) => {
-      const response = await api.post("/boq/items", data);
-      return response.data;
+      if (isEditing && editingItem) {
+        // For updates, exclude project_id
+        const {
+          project_id,
+          ...updateData
+        }: { project_id: string; [key: string]: any } = data;
+
+        // Ensure numeric fields are numbers
+        const updatePayload: UpdateItemData = {
+          ...updateData,
+          quantity: Number(updateData.quantity),
+          rate: Number(updateData.rate),
+        } as UpdateItemData;
+
+        const response = await api.patch(
+          `/boq/items/${editingItem.id}`,
+          updatePayload
+        );
+        return response.data;
+      } else {
+        // For creates, ensure numeric fields are numbers
+        const createPayload = {
+          ...data,
+          quantity: Number(data.quantity),
+          rate: Number(data.rate),
+        };
+
+        const response = await api.post("/boq/items", createPayload);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bill-full", billId] });
@@ -84,6 +163,14 @@ export default function CreateItemForm({
         rate: 0,
       });
       setUseKSMM(false);
+    },
+    onError: (error: any) => {
+      console.error("Error saving item:", error);
+      alert(
+        `Failed to ${isEditing ? "update" : "create"} item. ${
+          error.response?.data?.message || "Please try again."
+        }`
+      );
     },
   });
 
@@ -107,7 +194,9 @@ export default function CreateItemForm({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Add New Item</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {isEditing ? "Edit Item" : "Add New Item"}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -201,7 +290,8 @@ export default function CreateItemForm({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    quantity: parseFloat(e.target.value) || 0,
+                    quantity:
+                      e.target.value === "" ? 0 : Number(e.target.value),
                   })
                 }
               />
@@ -238,7 +328,7 @@ export default function CreateItemForm({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    rate: parseFloat(e.target.value) || 0,
+                    rate: e.target.value === "" ? 0 : Number(e.target.value),
                   })
                 }
               />
@@ -260,7 +350,13 @@ export default function CreateItemForm({
             >
               <Save className="w-4 h-4" />
               <span>
-                {createItemMutation.isPending ? "Creating..." : "Add Item"}
+                {createItemMutation.isPending
+                  ? isEditing
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditing
+                  ? "Update Item"
+                  : "Add Item"}
               </span>
             </button>
           </div>

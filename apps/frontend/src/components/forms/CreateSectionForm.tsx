@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { X, Save } from "lucide-react";
+
+interface Section {
+  id: number;
+  section_code: string;
+  section_title: string;
+  preamble?: string;
+  total_amount: number;
+  item_count: number;
+}
 
 interface CreateSectionFormProps {
   projectId: string;
   billId: string;
   isOpen: boolean;
   onClose: () => void;
+  editingSection?: Section | null;
 }
 
 interface CreateSectionData {
@@ -25,6 +35,7 @@ export default function CreateSectionForm({
   billId,
   isOpen,
   onClose,
+  editingSection,
 }: CreateSectionFormProps) {
   const [formData, setFormData] = useState<CreateSectionData>({
     project_id: projectId,
@@ -35,11 +46,41 @@ export default function CreateSectionForm({
   });
 
   const queryClient = useQueryClient();
+  const isEditing = !!editingSection;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingSection) {
+      setFormData({
+        project_id: projectId,
+        bill_id: parseInt(billId),
+        section_code: editingSection.section_code,
+        section_title: editingSection.section_title,
+        preamble: editingSection.preamble || "",
+      });
+    } else {
+      setFormData({
+        project_id: projectId,
+        bill_id: parseInt(billId),
+        section_code: "",
+        section_title: "",
+        preamble: "",
+      });
+    }
+  }, [editingSection, projectId, billId]);
 
   const createSectionMutation = useMutation({
     mutationFn: async (data: CreateSectionData) => {
-      const response = await api.post("/boq/sections", data);
-      return response.data;
+      if (isEditing && editingSection) {
+        const response = await api.patch(
+          `/boq/sections/${editingSection.id}`,
+          data
+        );
+        return response.data;
+      } else {
+        const response = await api.post("/boq/sections", data);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bill-full", billId] });
@@ -66,7 +107,7 @@ export default function CreateSectionForm({
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            Add New Section
+            {isEditing ? "Edit Section" : "Add New Section"}
           </h2>
           <button
             onClick={onClose}
@@ -142,7 +183,11 @@ export default function CreateSectionForm({
               <Save className="w-4 h-4" />
               <span>
                 {createSectionMutation.isPending
-                  ? "Creating..."
+                  ? isEditing
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditing
+                  ? "Update Section"
                   : "Add Section"}
               </span>
             </button>

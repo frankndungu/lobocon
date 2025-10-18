@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useParams } from "next/navigation";
 import {
@@ -61,6 +61,10 @@ export default function BillDetail() {
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(
     null
   );
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+
+  const queryClient = useQueryClient();
 
   const { data: bill, isLoading } = useQuery({
     queryKey: ["bill-full", billId],
@@ -69,6 +73,32 @@ export default function BillDetail() {
         `/boq/bills/${billId}/full`
       );
       return response.data;
+    },
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: async (sectionId: number) => {
+      await api.delete(`/boq/sections/${sectionId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bill-full", billId] });
+    },
+    onError: (error) => {
+      console.error("Error deleting section:", error);
+      alert("Failed to delete section. Please try again.");
+    },
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: number) => {
+      await api.delete(`/boq/items/${itemId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bill-full", billId] });
+    },
+    onError: (error) => {
+      console.error("Error deleting item:", error);
+      alert("Failed to delete item. Please try again.");
     },
   });
 
@@ -97,6 +127,40 @@ export default function BillDetail() {
   const closeItemForm = () => {
     setShowCreateItemForm(false);
     setSelectedSectionId(null);
+    setEditingItem(null);
+  };
+
+  const handleDeleteSection = (section: Section) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete section "${section.section_code}: ${section.section_title}"? This will also delete all items within this section.`
+      )
+    ) {
+      deleteSectionMutation.mutate(section.id);
+    }
+  };
+
+  const handleEditSection = (section: Section) => {
+    setEditingSection(section);
+    setShowCreateSectionForm(true);
+  };
+
+  const handleDeleteItem = (item: Item) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete item "${
+          item.item_code
+        }: ${item.description.substring(0, 50)}..."?`
+      )
+    ) {
+      deleteItemMutation.mutate(item.id);
+    }
+  };
+
+  const handleEditItem = (item: Item, sectionId: number) => {
+    setEditingItem(item);
+    setSelectedSectionId(sectionId);
+    setShowCreateItemForm(true);
   };
 
   const getItemTypeBadge = (type: string) => {
@@ -148,7 +212,6 @@ export default function BillDetail() {
               </div>
             </div>
 
-            {/* Enhanced Bill Totals */}
             <BillTotals
               subtotal={calculations.subtotal}
               contingencyPercentage={bill.contingency_percentage}
@@ -215,11 +278,26 @@ export default function BillDetail() {
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg">
-                        <Edit className="w-4 h-4 text-gray-600" />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditSection(section);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Edit Section"
+                      >
+                        <Edit className="w-4 h-4 text-gray-600 hover:text-blue-600" />
                       </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg">
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSection(section);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Delete Section"
+                        disabled={deleteSectionMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
                       </button>
                     </div>
                   </div>
@@ -280,11 +358,22 @@ export default function BillDetail() {
                                 KES {Number(item.amount).toLocaleString()}
                               </div>
                               <div className="flex space-x-1 mt-2">
-                                <button className="p-1 hover:bg-gray-100 rounded">
-                                  <Edit className="w-3 h-3 text-gray-600" />
+                                <button
+                                  onClick={() =>
+                                    handleEditItem(item, section.id)
+                                  }
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Edit Item"
+                                >
+                                  <Edit className="w-3 h-3 text-gray-600 hover:text-blue-600" />
                                 </button>
-                                <button className="p-1 hover:bg-gray-100 rounded">
-                                  <Trash2 className="w-3 h-3 text-red-600" />
+                                <button
+                                  onClick={() => handleDeleteItem(item)}
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Delete Item"
+                                  disabled={deleteItemMutation.isPending}
+                                >
+                                  <Trash2 className="w-3 h-3 text-gray-600 hover:text-red-600" />
                                 </button>
                               </div>
                             </div>
@@ -309,15 +398,19 @@ export default function BillDetail() {
         )}
       </div>
 
-      {/* Create Section Modal */}
+      {/* Create/Edit Section Modal */}
       <CreateSectionForm
         projectId={projectId}
         billId={billId}
         isOpen={showCreateSectionForm}
-        onClose={() => setShowCreateSectionForm(false)}
+        onClose={() => {
+          setShowCreateSectionForm(false);
+          setEditingSection(null);
+        }}
+        editingSection={editingSection}
       />
 
-      {/* Create Item Modal */}
+      {/* Create/Edit Item Modal */}
       {selectedSectionId && (
         <CreateItemForm
           projectId={projectId}
@@ -325,6 +418,7 @@ export default function BillDetail() {
           sectionId={selectedSectionId}
           isOpen={showCreateItemForm}
           onClose={closeItemForm}
+          editingItem={editingItem}
         />
       )}
     </div>
