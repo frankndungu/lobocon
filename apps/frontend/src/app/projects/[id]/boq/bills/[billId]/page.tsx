@@ -16,6 +16,7 @@ import CreateSectionForm from "@/components/forms/CreateSectionForm";
 import CreateItemForm from "@/components/forms/CreateItemForm";
 import BillTotals from "@/components/ui/BillTotals";
 import { useCalculations } from "@/hooks/useCalculations";
+import CollectionsManagement from "@/components/CollectionsManagement";
 
 interface Section {
   id: number;
@@ -381,6 +382,18 @@ export default function BillDetail() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Collections */}
+              {expandedSections.has(section.id) && (
+                <div className="border-t bg-gray-50">
+                  <div className="p-4">
+                    <CollectionsManagement
+                      projectId={projectId}
+                      sectionId={section.id}
+                    />
                   </div>
                 </div>
               )}

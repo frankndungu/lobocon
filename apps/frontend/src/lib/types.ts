@@ -27,3 +27,44 @@ export interface Bill {
   created_at: string;
   updated_at: string;
 }
+
+export interface Collection {
+  id: number;
+  project_id: string;
+  section_id: number;
+  parent_item_id?: number;
+  collection_title: string;
+  description: string;
+  page_reference: string;
+  document_reference?: string;
+  collection_type: string;
+  sort_order: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCollectionData {
+  project_id: string;
+  section_id: number;
+  parent_item_id?: number;
+  collection_title: string;
+  description: string;
+  page_reference: string;
+  document_reference?: string;
+  collection_type: string;
+  sort_order?: number;
+  notes?: string;
+}
+
+export interface UpdateCollectionData {
+  section_id?: number;
+  parent_item_id?: number;
+  collection_title?: string;
+  description?: string;
+  page_reference?: string;
+  document_reference?: string;
+  collection_type?: string;
+  sort_order?: number;
+  notes?: string;
+}
