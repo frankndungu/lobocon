@@ -119,13 +119,11 @@ export default function CreateItemForm({
   const createItemMutation = useMutation({
     mutationFn: async (data: CreateItemData) => {
       if (isEditing && editingItem) {
-        // For updates, exclude project_id
         const {
           project_id,
           ...updateData
         }: { project_id: string; [key: string]: any } = data;
 
-        // Ensure numeric fields are numbers
         const updatePayload: UpdateItemData = {
           ...updateData,
           quantity: Number(updateData.quantity),
@@ -138,7 +136,6 @@ export default function CreateItemForm({
         );
         return response.data;
       } else {
-        // For creates, ensure numeric fields are numbers
         const createPayload = {
           ...data,
           quantity: Number(data.quantity),
@@ -174,14 +171,8 @@ export default function CreateItemForm({
     },
   });
 
-  const handleKSMMSelect = (clause: KSMMClause) => {
-    setFormData({
-      ...formData,
-      description: clause.clause_reference,
-      item_code: clause.section,
-    });
-    setUseKSMM(false);
-  };
+  // ✅ REMOVED: handleKSMMSelect function - KSMM is now reference-only
+  // Users manually copy content using the copy buttons in KSMM search
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,7 +183,7 @@ export default function CreateItemForm({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
             {isEditing ? "Edit Item" : "Add New Item"}
@@ -207,6 +198,7 @@ export default function CreateItemForm({
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-2 gap-6">
+            {/* Item Code - User controlled, never overwritten */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 Item Code <span className="text-red-500">*</span>
@@ -215,12 +207,15 @@ export default function CreateItemForm({
                 type="text"
                 required
                 className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                placeholder="A.1.1"
+                placeholder="A.1.1, 1.01, B, etc."
                 value={formData.item_code}
                 onChange={(e) =>
                   setFormData({ ...formData, item_code: e.target.value })
                 }
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Your item numbering system (protected from KSMM overwrite)
+              </p>
             </div>
 
             <div>
@@ -250,30 +245,34 @@ export default function CreateItemForm({
                 <button
                   type="button"
                   onClick={() => setUseKSMM(!useKSMM)}
-                  className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span>{useKSMM ? "Manual Entry" : "Use KSMM"}</span>
+                  <span>{useKSMM ? "Manual Entry" : "Use KSMM Reference"}</span>
                 </button>
               </div>
 
               {useKSMM ? (
-                <KSMMSearch
-                  onSelect={handleKSMMSelect}
-                  placeholder="Search KSMM clauses for professional descriptions..."
-                />
-              ) : (
-                <textarea
-                  required
-                  className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium resize-none"
-                  rows={3}
-                  placeholder="Detailed description of the work item"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              )}
+                <div className="space-y-3">
+                  <KSMMSearch showTemplateOptions={true} />
+                  <p className="text-xs text-gray-500">
+                    Use KSMM as a reference tool - copy content using the
+                    buttons, then paste into description below
+                  </p>
+                </div>
+              ) : null}
+
+              {/* Description field - always visible and editable */}
+              <textarea
+                required
+                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium resize-none"
+                rows={4}
+                placeholder="Professional description of the work item (use KSMM reference for standardized language)"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
             </div>
 
             <div>
@@ -333,6 +332,24 @@ export default function CreateItemForm({
                 }
               />
             </div>
+
+            {/* Amount Preview */}
+            {formData.quantity > 0 && formData.rate > 0 && (
+              <div className="col-span-2 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-green-800">
+                    Total Amount
+                  </span>
+                  <span className="text-lg font-bold text-green-700">
+                    KES {(formData.quantity * formData.rate).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-xs text-green-600 mt-1">
+                  {formData.quantity} {formData.unit} × KES{" "}
+                  {formData.rate.toLocaleString()}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
