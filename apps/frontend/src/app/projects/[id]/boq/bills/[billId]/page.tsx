@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -10,6 +10,8 @@ import {
   ChevronRight,
   Edit,
   Trash2,
+  ChevronRight as BreadcrumbChevron,
+  Home,
 } from "lucide-react";
 import { useState } from "react";
 import CreateSectionForm from "@/components/forms/CreateSectionForm";
@@ -50,8 +52,14 @@ interface BillWithSections {
   sections: Section[];
 }
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 export default function BillDetail() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.id as string;
   const billId = params.billId as string;
   const [expandedSections, setExpandedSections] = useState<Set<number>>(
@@ -67,12 +75,27 @@ export default function BillDetail() {
 
   const queryClient = useQueryClient();
 
+  // Fetch project details for breadcrumb
+  const { data: project } = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      const response = await api.get<Project>(`/projects/${projectId}`);
+      return response.data;
+    },
+  });
+
   const { data: bill, isLoading } = useQuery({
     queryKey: ["bill-full", billId],
     queryFn: async () => {
       const response = await api.get<BillWithSections>(
         `/boq/bills/${billId}/full`
       );
+      // Sort sections by section_code alphabetically (A, B, C, D...)
+      if (response.data?.sections) {
+        response.data.sections.sort((a, b) => {
+          return a.section_code.localeCompare(b.section_code);
+        });
+      }
       return response.data;
     },
   });
@@ -194,13 +217,42 @@ export default function BillDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Breadcrumbs */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <button
+              onClick={() => router.push("/projects")}
+              className="flex items-center hover:text-blue-600 transition-colors"
+            >
+              <Home className="w-4 h-4 mr-1" />
+              Projects
+            </button>
+            <BreadcrumbChevron className="w-4 h-4" />
+            <button
+              onClick={() => router.push(`/projects/${projectId}`)}
+              className="hover:text-blue-600 transition-colors"
+            >
+              {project?.name || "Project"}
+            </button>
+            <BreadcrumbChevron className="w-4 h-4" />
+            <button
+              onClick={() => router.push(`/projects/${projectId}/boq`)}
+              className="hover:text-blue-600 transition-colors"
+            >
+              BOQ
+            </button>
+            <BreadcrumbChevron className="w-4 h-4" />
+            <span className="text-gray-900 font-medium">
+              {bill.bill_number}
+            </span>
+          </nav>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => window.history.back()}
+                onClick={() => router.push(`/projects/${projectId}/boq`)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
               >
                 <ArrowLeft className="w-5 h-5" />
