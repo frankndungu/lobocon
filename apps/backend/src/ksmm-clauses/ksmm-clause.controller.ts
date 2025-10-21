@@ -8,6 +8,7 @@ export class KsmmClauseController {
   /**
    * GET /clauses
    * Optionally supports search query ?search=term
+   * Enhanced to support section code searches (A, B, C, A1, B2, etc.)
    */
   @Get()
   async getAll(@Query('search') search?: string) {
@@ -23,5 +24,14 @@ export class KsmmClauseController {
   @Get(':id')
   async getOne(@Param('id', ParseIntPipe) id: number) {
     return await this.clauseService.findOne(id);
+  }
+
+  /**
+   * GET /clauses/sections/codes
+   * Get all available section codes (A, B, C, etc.) for quick reference
+   */
+  @Get('sections/codes')
+  async getSectionCodes() {
+    return await this.clauseService.getSectionCodes();
   }
 }
