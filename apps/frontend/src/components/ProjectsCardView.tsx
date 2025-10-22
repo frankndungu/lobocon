@@ -76,7 +76,7 @@ export function ProjectsCardView({
       {projects.map((project) => (
         <div
           key={project.id}
-          className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-all cursor-pointer group"
+          className="bg-white rounded-lg shadow-sm border hover:shadow-md hover:border-gray-400  transition-all cursor-pointer group"
           onClick={() => onProjectClick(project.id)}
         >
           <div className="p-6">
