@@ -1,14 +1,75 @@
+// Project types matching backend entity
 export interface Project {
   id: string;
   name: string;
   code: string;
-  city: string;
-  county: string;
-  type: string;
-  stage: string;
-  status: string;
+
+  // Location
+  address?: string;
+  city?: string;
+  county?: string;
+  postcode?: string;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
+
+  // Classification
+  type: ProjectType;
+  stage: ProjectStage;
+  status: ProjectStatus;
+  department?: string;
+
+  // Scheduling
+  programme?: string;
+  startDate?: string;
+  endDate?: string;
+
+  // Progress
+  progress: number;
+
+  // Financials
+  budget?: number;
+  currency: string;
+
+  // Metadata
+  notes?: string;
+  companyId: string;
+  createdById: string;
   createdAt: string;
   updatedAt: string;
+
+  // Relations
+  bills?: Bill[];
+  boqSections?: Section[];
+  boqItems?: Item[];
+  collections?: Collection[];
+}
+
+// Project enums matching backend
+export enum ProjectType {
+  RESIDENTIAL = "RESIDENTIAL",
+  COMMERCIAL = "COMMERCIAL",
+  INFRASTRUCTURE = "INFRASTRUCTURE",
+  INDUSTRIAL = "INDUSTRIAL",
+  RENOVATION = "RENOVATION",
+  OTHER = "OTHER",
+}
+
+export enum ProjectStage {
+  PRE_CONSTRUCTION = "PRE_CONSTRUCTION",
+  COURSE_OF_CONSTRUCTION = "COURSE_OF_CONSTRUCTION",
+  COMPLETION = "COMPLETION",
+  CLOSED = "CLOSED",
+}
+
+export enum ProjectStatus {
+  ACTIVE = "ACTIVE",
+  TENDERING = "TENDERING",
+  ON_HOLD = "ON_HOLD",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+  DELAYED = "DELAYED",
+  HANDOVER = "HANDOVER",
 }
 
 export interface Bill {

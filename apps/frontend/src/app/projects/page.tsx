@@ -4,12 +4,25 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Project } from "@/lib/types";
-import { Building, Calendar, MapPin, ArrowRight, Plus } from "lucide-react";
+import {
+  Plus,
+  Search,
+  LayoutGrid,
+  Table as TableIcon,
+  Map as MapIcon,
+} from "lucide-react";
 import CreateProjectForm from "@/components/forms/CreateProjectForm";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { ProjectsCardView } from "@/components/ProjectsCardView";
+import { ProjectsTable } from "@/components/ProjectsTable";
+import { ProjectsMapView } from "@/components/ProjectsMapView";
+
+type ViewMode = "card" | "table" | "map";
 
 export default function ProjectSelection() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("card");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     data: projects,
@@ -22,6 +35,22 @@ export default function ProjectSelection() {
       return response.data;
     },
   });
+
+  // Filter projects based on search query
+  const filteredProjects = projects?.filter(
+    (project) =>
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.city?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleProjectClick = (projectId: string) => {
+    window.location.href = `/projects/${projectId}/boq`;
+  };
+
+  const handleCreateClick = () => {
+    setShowCreateForm(true);
+  };
 
   if (isLoading) {
     return (
@@ -51,94 +80,98 @@ export default function ProjectSelection() {
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
               <p className="text-gray-600 mt-1">
-                Select a project to manage its Bill of Quantities
+                Manage your construction projects and their Bill of Quantities
               </p>
             </div>
             <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+              onClick={handleCreateClick}
+              className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 flex items-center space-x-2 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span>Create New Project</span>
+              <span>New Project</span>
             </button>
+          </div>
+
+          {/* Search and View Toggle */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              />
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === "card"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+                title="Thumbnail View"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === "table"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+                title="Table View"
+              >
+                <TableIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === "map"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+                title="Map View"
+              >
+                <MapIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Project Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects?.map((project) => (
-          <div
-            key={project.id}
-            className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() =>
-              (window.location.href = `/projects/${project.id}/boq`)
-            }
-          >
-            <div className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {project.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">{project.code}</p>
-                </div>
-                <ArrowRight className="w-5 h-5 text-gray-400" />
-              </div>
+      {/* Render View Based on Mode */}
+      {viewMode === "card" && (
+        <ProjectsCardView
+          projects={filteredProjects || []}
+          onProjectClick={handleProjectClick}
+          onCreateClick={handleCreateClick}
+          searchQuery={searchQuery}
+        />
+      )}
 
-              <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Building className="w-4 h-4 mr-2" />
-                  {project.type}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  {project.city}, {project.county}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {new Date(project.createdAt).toLocaleDateString()}
-                </div>
-              </div>
+      {viewMode === "table" && (
+        <ProjectsTable
+          projects={filteredProjects || []}
+          onProjectClick={handleProjectClick}
+          onCreateClick={handleCreateClick}
+          searchQuery={searchQuery}
+        />
+      )}
 
-              <div className="mt-4 pt-4 border-t">
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                    project.status === "ACTIVE"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {project.status}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {projects?.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No projects found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Get started by creating your first project.
-            </p>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 mx-auto transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Your First Project</span>
-            </button>
-          </div>
-        )}
-      </div>
+      {viewMode === "map" && (
+        <ProjectsMapView projects={filteredProjects || []} />
+      )}
 
       {/* Create Project Modal */}
       <CreateProjectForm
