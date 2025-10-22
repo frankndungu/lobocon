@@ -7,7 +7,6 @@ import {
   Plus,
   Calculator,
   FileText,
-  ArrowLeft,
   Edit,
   Trash2,
   ChevronRight as BreadcrumbChevron,
@@ -16,6 +15,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import CreateBillForm from "@/components/forms/CreateBillForm";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 interface Project {
   id: string;
@@ -106,118 +106,115 @@ export default function BOQManagement() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading BOQ...</div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-lg text-gray-900 font-medium">
+            Loading BOQ...
+          </div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600">
-          Error loading bills. Please check your connection and try again.
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-red-600 font-medium">
+            Error loading bills. Please check your connection and try again.
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout>
       {/* Header with Breadcrumbs */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="bg-white rounded-lg shadow-sm border mb-6">
+        <div className="px-6 py-4">
           {/* Breadcrumbs */}
-          <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
             <button
               onClick={() => router.push("/projects")}
-              className="flex items-center hover:text-blue-600 transition-colors"
+              className="flex items-center hover:text-gray-950 transition-colors font-medium"
             >
-              <Home className="w-4 h-4 mr-1" />
               Projects
             </button>
             <BreadcrumbChevron className="w-4 h-4" />
             <button
               onClick={() => router.push(`/projects/${projectId}`)}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-gray-950 transition-colors font-medium"
             >
               {project?.name || "Project"}
             </button>
             <BreadcrumbChevron className="w-4 h-4" />
-            <span className="text-gray-900 font-medium">BOQ</span>
+            <span className="text-gray-950 font-semibold">BOQ</span>
           </nav>
 
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => router.push(`/projects/${projectId}`)}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-950">
                 Bill of Quantities
               </h1>
-              <p className="text-lg text-gray-600 mt-1">
+              <p className="text-gray-700 mt-1 font-medium">
                 {project?.name || "Project"} BOQ Management
               </p>
             </div>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-gray-950 text-white px-6 py-2.5 rounded-lg hover:bg-gray-800 flex items-center space-x-2 font-medium transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Create New Bill</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Bills Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Bills Overview</h2>
-            <p className="text-gray-600 mt-1">
-              {bills?.length || 0} bill{bills?.length !== 1 ? "s" : ""} in this
-              project
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center space-x-2 font-medium transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Create New Bill</span>
-          </button>
+      <div>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-950">Bills Overview</h2>
+          <p className="text-gray-700 mt-1 font-medium">
+            {bills?.length || 0} bill{bills?.length !== 1 ? "s" : ""} in this
+            project
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {bills?.map((bill) => (
             <div
               key={bill.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all p-6"
             >
               <div className="flex justify-between items-start mb-6">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl font-bold text-gray-950 mb-2">
                     {bill.bill_number}
                   </h3>
-                  <p className="text-lg text-gray-700 font-medium mb-3">
+                  <p className="text-lg text-gray-900 font-semibold mb-3">
                     {bill.bill_title}
                   </p>
                   {bill.description && (
-                    <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                    <p className="text-sm text-gray-700 leading-relaxed line-clamp-2 font-medium">
                       {bill.description}
                     </p>
                   )}
                 </div>
                 <div className="flex items-start space-x-3 ml-6">
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-green-600 mb-1">
+                    <div className="text-2xl font-bold text-green-600 mb-1">
                       KES {Number(bill.total_amount || 0).toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-500 font-medium">
+                    <div className="text-xs text-gray-600 font-semibold">
                       +{bill.contingency_percentage || 0}% contingency
                     </div>
                   </div>
                   <div className="flex flex-col space-y-2 ml-2">
                     <button
                       onClick={() => setEditingBill(bill)}
-                      className="p-2 hover:bg-blue-50 rounded-lg text-gray-600 hover:text-blue-600 transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-950 transition-colors"
                       title="Edit Bill"
                     >
                       <Edit className="w-4 h-4" />
@@ -236,18 +233,18 @@ export default function BOQManagement() {
 
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                  <div className="text-2xl font-bold text-gray-950 mb-1">
                     {bill.section_count || 0}
                   </div>
-                  <div className="text-sm font-medium text-gray-600">
+                  <div className="text-sm font-semibold text-gray-700">
                     Section{bill.section_count !== 1 ? "s" : ""}
                   </div>
                 </div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                  <div className="text-2xl font-bold text-gray-950 mb-1">
                     {bill.item_count || 0}
                   </div>
-                  <div className="text-sm font-medium text-gray-600">
+                  <div className="text-sm font-semibold text-gray-700">
                     Item{bill.item_count !== 1 ? "s" : ""}
                   </div>
                 </div>
@@ -255,14 +252,14 @@ export default function BOQManagement() {
 
               <div className="flex space-x-3">
                 <button
-                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2 font-medium transition-colors"
+                  className="flex-1 bg-gray-950 text-white py-2.5 px-4 rounded-lg hover:bg-gray-800 flex items-center justify-center space-x-2 font-medium transition-colors shadow-sm"
                   onClick={() => handleViewBill(bill.id)}
                 >
                   <FileText className="w-4 h-4" />
                   <span>View Details</span>
                 </button>
                 <button
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 flex items-center justify-center space-x-2 font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 bg-gray-100 text-gray-950 py-2.5 px-4 rounded-lg hover:bg-gray-200 flex items-center justify-center space-x-2 font-semibold transition-colors disabled:opacity-50"
                   onClick={() => handleRecalculate(bill.id)}
                   disabled={recalculateBillMutation.isPending}
                 >
@@ -279,21 +276,21 @@ export default function BOQManagement() {
         </div>
 
         {bills?.length === 0 && (
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-white rounded-lg shadow-sm border">
             <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
               <FileText className="w-10 h-10 text-gray-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold text-gray-950 mb-3">
               No bills found
             </h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
+            <p className="text-gray-700 mb-8 max-w-md mx-auto leading-relaxed font-medium">
               Create your first bill to start building the BOQ for this project.
               Bills help you organize different aspects of your construction
               project.
             </p>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 flex items-center space-x-3 mx-auto font-medium transition-colors"
+              className="bg-gray-950 text-white px-8 py-3 rounded-lg hover:bg-gray-800 flex items-center space-x-3 mx-auto font-medium transition-colors shadow-sm"
             >
               <Plus className="w-5 h-5" />
               <span>Create Your First Bill</span>
@@ -312,6 +309,6 @@ export default function BOQManagement() {
         }}
         editingBill={editingBill}
       />
-    </div>
+    </DashboardLayout>
   );
 }
