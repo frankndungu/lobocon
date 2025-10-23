@@ -154,13 +154,25 @@ export default function CreateBillForm({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Blurred Background Overlay */}
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {isEditing ? "Edit Bill" : "Create New Bill"}
-          </h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Save className="w-5 h-5 text-gray-700" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              {isEditing ? "Edit Bill" : "Create New Bill"}
+            </h2>
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -171,51 +183,54 @@ export default function CreateBillForm({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-6">
-            {/* Bill Number */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Bill Number <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                placeholder="Bill No. 3"
-                value={formData.bill_number}
-                onChange={(e) =>
-                  setFormData({ ...formData, bill_number: e.target.value })
-                }
-              />
-            </div>
+          <div className="space-y-5">
+            {/* Bill Number and Title Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Bill Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Bill Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  placeholder="e.g., Bill No. 1"
+                  value={formData.bill_number}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bill_number: e.target.value })
+                  }
+                />
+              </div>
 
-            {/* Bill Title */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Bill Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                placeholder="M&E Works"
-                value={formData.bill_title}
-                onChange={(e) =>
-                  setFormData({ ...formData, bill_title: e.target.value })
-                }
-              />
+              {/* Bill Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Bill Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  placeholder="e.g., Preliminaries and General Items"
+                  value={formData.bill_title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bill_title: e.target.value })
+                  }
+                />
+              </div>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium resize-none"
+                className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 resize-none"
                 rows={4}
-                placeholder="Brief description of this bill's scope and work items"
+                placeholder="Project description and additional notes..."
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -225,7 +240,7 @@ export default function CreateBillForm({
 
             {/* Contingency Percentage */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Contingency Percentage (%)
               </label>
               <input
@@ -233,12 +248,12 @@ export default function CreateBillForm({
                 step="0.1"
                 min="0"
                 max="100"
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
+                className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                placeholder="e.g., 6.5"
                 value={formData.contingency_percentage}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    // Ensure it's converted to a number, not a string
                     contingency_percentage:
                       e.target.value === "" ? 0 : Number(e.target.value),
                   })
@@ -248,29 +263,26 @@ export default function CreateBillForm({
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+              className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createBillMutation.isPending}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors font-semibold"
+              className="px-6 py-2.5 bg-gray-950 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              <Save className="w-4 h-4" />
-              <span>
-                {createBillMutation.isPending
-                  ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditing
-                  ? "Update Bill"
-                  : "Create Bill"}
-              </span>
+              {createBillMutation.isPending
+                ? isEditing
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditing
+                ? "Update Bill"
+                : "Create Bill"}
             </button>
           </div>
         </form>
