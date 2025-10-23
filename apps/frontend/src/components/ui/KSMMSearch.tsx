@@ -22,8 +22,7 @@ interface KSMMSearchProps {
 }
 
 export default function KSMMSearch({
-  onSelect,
-  placeholder = "Search KSMM clauses or enter section code (A, B, C, A1, B2...)...",
+  placeholder = "Search SMM clauses or enter section code (A, B, C, A1, B2...)...",
   className = "",
   showTemplateOptions = true,
 }: KSMMSearchProps) {
@@ -245,7 +244,7 @@ export default function KSMMSearch({
             {isLoading ? (
               <div className="p-4 text-center text-gray-500">
                 <div className="animate-spin inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
-                Searching KSMM clauses...
+                Searching SMM clauses...
               </div>
             ) : clauses?.length ? (
               <div className="divide-y divide-gray-100">
@@ -266,12 +265,12 @@ export default function KSMMSearch({
                   return (
                     <div
                       key={clause.id}
-                      className="relative group border-b border-gray-100 last:border-b-0"
+                      className="relative border-b border-gray-100 last:border-b-0"
                       title={`Full Reference: ${clause.clause_reference}`}
                     >
-                      {/* Main Content Area - NOT a button, just clickable div */}
+                      {/* Main Content Area */}
                       <div
-                        className="w-full p-4 cursor-pointer hover:bg-blue-50 transition-colors"
+                        className="w-full p-4 pr-24 cursor-pointer"
                         onClick={() => handleSelect(clause)}
                       >
                         <div className="flex items-start space-x-3">
@@ -310,8 +309,8 @@ export default function KSMMSearch({
                         </div>
                       </div>
 
-                      {/* Copy buttons - OUTSIDE the clickable area, positioned absolutely */}
-                      <div className="absolute top-4 right-4 flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Copy buttons - Always visible, positioned absolutely */}
+                      <div className="absolute top-4 right-4 flex flex-col space-y-2">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -319,10 +318,10 @@ export default function KSMMSearch({
                             e.stopPropagation();
                             copyClauseContent(clause);
                           }}
-                          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer rounded"
+                          className="p-2 text-gray-900 bg-white border border-gray-300 hover:bg-gray-50 rounded transition-colors shadow-sm"
                           title="Copy template content"
                         >
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-4 h-4" />
                         </button>
                         <button
                           type="button"
@@ -331,25 +330,11 @@ export default function KSMMSearch({
                             e.stopPropagation();
                             copyReference(clause.clause_reference);
                           }}
-                          className="p-1 text-gray-400 hover:text-green-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer rounded"
+                          className="p-2 text-gray-900 bg-white border border-gray-300 hover:bg-gray-50 rounded transition-colors shadow-sm"
                           title="Copy full reference"
                         >
-                          <FileText className="w-3 h-3" />
+                          <FileText className="w-4 h-4" />
                         </button>
-                      </div>
-
-                      {/* Hover tooltip for full reference */}
-                      <div className="absolute left-0 top-full mt-2 w-full max-w-md bg-gray-900 text-white text-xs p-3 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
-                        <div className="font-medium mb-1">
-                          Full KSMM Reference:
-                        </div>
-                        <div className="leading-relaxed">
-                          {clause.clause_reference}
-                        </div>
-                        <div className="mt-2 text-gray-300">
-                          Click FileText icon to copy • Click Copy icon for
-                          template
-                        </div>
                       </div>
                     </div>
                   );
@@ -358,7 +343,7 @@ export default function KSMMSearch({
             ) : (
               <div className="p-4 text-center text-gray-500">
                 <Book className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <div className="text-sm">No KSMM clauses found</div>
+                <div className="text-sm">No SMM clauses found</div>
                 <div className="text-xs text-gray-400 mt-1">
                   Try section codes like A, B, C or keywords
                 </div>
@@ -376,7 +361,7 @@ export default function KSMMSearch({
               <div className="flex items-center space-x-2 mb-2">
                 <FileText className="w-4 h-4 text-blue-600" />
                 <span className="font-medium text-blue-900 text-sm">
-                  KSMM Template Applied
+                  SMM Template Applied
                 </span>
                 <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
                   {templateMode}

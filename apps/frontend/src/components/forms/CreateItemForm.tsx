@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { X, Save, BookOpen } from "lucide-react";
+import { X, Package } from "lucide-react";
 import KSMMSearch from "@/components/ui/KSMMSearch";
 
 interface Item {
@@ -47,15 +47,6 @@ interface UpdateItemData {
   rate: number;
 }
 
-interface KSMMClause {
-  id: number;
-  section_code: string;
-  section: string;
-  contents: string;
-  clause_title: string;
-  clause_reference: string;
-}
-
 const ITEM_TYPES = [
   { value: "MEASURED", label: "Measured" },
   { value: "LUMP_SUM", label: "Lump Sum" },
@@ -84,7 +75,7 @@ export default function CreateItemForm({
     rate: 0,
   });
 
-  const [useKSMM, setUseKSMM] = useState(false);
+  const [showKSMM, setShowKSMM] = useState(false);
   const queryClient = useQueryClient();
   const isEditing = !!editingItem;
 
@@ -113,7 +104,7 @@ export default function CreateItemForm({
         rate: 0,
       });
     }
-    setUseKSMM(false);
+    setShowKSMM(false);
   }, [editingItem, projectId, sectionId]);
 
   const createItemMutation = useMutation({
@@ -159,7 +150,7 @@ export default function CreateItemForm({
         unit: "",
         rate: 0,
       });
-      setUseKSMM(false);
+      setShowKSMM(false);
     },
     onError: (error: any) => {
       console.error("Error saving item:", error);
@@ -171,9 +162,6 @@ export default function CreateItemForm({
     },
   });
 
-  // ✅ REMOVED: handleKSMMSelect function - KSMM is now reference-only
-  // Users manually copy content using the copy buttons in KSMM search
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createItemMutation.mutate(formData);
@@ -182,12 +170,25 @@ export default function CreateItemForm({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {isEditing ? "Edit Item" : "Add New Item"}
-          </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Blurred Background Overlay */}
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal - Extra Wide for KSMM */}
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Package className="w-5 h-5 text-gray-700" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              {isEditing ? "Edit Item" : "Add New Item"}
+            </h2>
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -196,78 +197,111 @@ export default function CreateItemForm({
           </button>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Item Code - User controlled, never overwritten */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Item Code <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                placeholder="A.1.1, 1.01, B, etc."
-                value={formData.item_code}
-                onChange={(e) =>
-                  setFormData({ ...formData, item_code: e.target.value })
-                }
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Your item numbering system (protected from KSMM overwrite)
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Item Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base font-medium"
-                value={formData.item_type}
-                onChange={(e) =>
-                  setFormData({ ...formData, item_type: e.target.value })
-                }
-              >
-                {ITEM_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-span-2">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-gray-900">
-                  Description <span className="text-red-500">*</span>
+          <div className="space-y-5">
+            {/* Item Code, Type, Unit Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Item Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Item Code <span className="text-red-500">*</span>
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setUseKSMM(!useKSMM)}
-                  className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>{useKSMM ? "Manual Entry" : "Use KSMM Reference"}</span>
-                </button>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  placeholder="e.g., A.1.1"
+                  value={formData.item_code}
+                  onChange={(e) =>
+                    setFormData({ ...formData, item_code: e.target.value })
+                  }
+                />
               </div>
 
-              {useKSMM ? (
-                <div className="space-y-3">
-                  <KSMMSearch showTemplateOptions={true} />
-                  <p className="text-xs text-gray-500">
-                    Use KSMM as a reference tool - copy content using the
-                    buttons, then paste into description below
+              {/* Item Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Item Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  value={formData.item_type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, item_type: e.target.value })
+                  }
+                >
+                  {ITEM_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Unit */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Unit <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  placeholder="e.g., m², Nr, Sum"
+                  value={formData.unit}
+                  onChange={(e) =>
+                    setFormData({ ...formData, unit: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* KSMM Toggle Button */}
+            <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    SMM Library
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Search and reference standardized construction descriptions
                   </p>
                 </div>
-              ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKSMM(!showKSMM)}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {showKSMM ? "Hide KSMM" : "Show KSMM"}
+              </button>
+            </div>
 
-              {/* Description field - always visible and editable */}
+            {/* KSMM Search - Full Width */}
+            {showKSMM && (
+              <div className="border border-gray-200 rounded-lg p-5 bg-gray-50">
+                <KSMMSearch showTemplateOptions={true} />
+                <p className="text-xs text-gray-500 mt-3">
+                  💡 Tip: Use the copy buttons to copy SMM content, then paste
+                  into the description field below
+                </p>
+              </div>
+            )}
+
+            {/* Description - Full Width */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Description <span className="text-red-500">*</span>
+              </label>
               <textarea
                 required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium resize-none"
-                rows={4}
-                placeholder="Professional description of the work item (use KSMM reference for standardized language)"
+                className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 resize-none"
+                rows={5}
+                placeholder="Professional description of the work item (use SMM reference for standardized language)"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -275,76 +309,66 @@ export default function CreateItemForm({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Quantity <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                value={formData.quantity}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    quantity:
-                      e.target.value === "" ? 0 : Number(e.target.value),
-                  })
-                }
-              />
-            </div>
+            {/* Quantity and Rate Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Quantity */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Quantity <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  placeholder="0.00"
+                  value={formData.quantity}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      quantity:
+                        e.target.value === "" ? 0 : Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Unit <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                placeholder="m², m³, Nr, Sum"
-                value={formData.unit}
-                onChange={(e) =>
-                  setFormData({ ...formData, unit: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Rate (KES) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-base font-medium"
-                placeholder="0.00"
-                value={formData.rate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    rate: e.target.value === "" ? 0 : Number(e.target.value),
-                  })
-                }
-              />
+              {/* Rate */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Rate (KES) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  className="w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  placeholder="0.00"
+                  value={formData.rate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      rate: e.target.value === "" ? 0 : Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
             </div>
 
             {/* Amount Preview */}
             {formData.quantity > 0 && formData.rate > 0 && (
-              <div className="col-span-2 bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-5">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-green-800">
                     Total Amount
                   </span>
-                  <span className="text-lg font-bold text-green-700">
+                  <span className="text-2xl font-bold text-green-700">
                     KES {(formData.quantity * formData.rate).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-green-600 mt-2">
                   {formData.quantity} {formData.unit} × KES{" "}
                   {formData.rate.toLocaleString()}
                 </p>
@@ -352,29 +376,27 @@ export default function CreateItemForm({
             )}
           </div>
 
-          <div className="flex justify-end space-x-4 pt-8 mt-6 border-t border-gray-200">
+          {/* Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+              className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createItemMutation.isPending}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors font-semibold"
+              className="px-6 py-2.5 bg-gray-950 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              <Save className="w-4 h-4" />
-              <span>
-                {createItemMutation.isPending
-                  ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditing
-                  ? "Update Item"
-                  : "Add Item"}
-              </span>
+              {createItemMutation.isPending
+                ? isEditing
+                  ? "Updating..."
+                  : "Creating..."
+                : isEditing
+                ? "Update Item"
+                : "Add Item"}
             </button>
           </div>
         </form>
