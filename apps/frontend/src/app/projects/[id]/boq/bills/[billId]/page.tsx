@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Plus,
   ChevronDown,
   ChevronRight,
@@ -17,13 +16,13 @@ import {
   Building,
   Package,
   GripVertical,
-  Hash,
 } from "lucide-react";
 import CreateSectionForm from "@/components/forms/CreateSectionForm";
 import CreateItemForm from "@/components/forms/CreateItemForm";
 import BillTotals from "@/components/ui/BillTotals";
 import { useCalculations } from "@/hooks/useCalculations";
 import CollectionsManagement from "@/components/CollectionsManagement";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 interface Section {
   id: number;
@@ -208,37 +207,39 @@ export default function BillDetail() {
     setEditingItem(null);
   };
 
-  const handleDeleteSection = (section: Section) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete section "${section.section_code}: ${section.section_title}"? This will also delete all items within this section.`
-      )
-    ) {
-      deleteSectionMutation.mutate(section.id);
-    }
-  };
-
   const handleEditSection = (section: Section) => {
     setEditingSection(section);
     setShowCreateSectionForm(true);
-  };
-
-  const handleDeleteItem = (item: Item) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete item "${
-          item.item_code
-        }: ${item.description.substring(0, 50)}..."?`
-      )
-    ) {
-      deleteItemMutation.mutate(item.id);
-    }
   };
 
   const handleEditItem = (item: Item, sectionId: number) => {
     setEditingItem(item);
     setSelectedSectionId(sectionId);
     setShowCreateItemForm(true);
+  };
+
+  const handleDeleteSection = (section: Section) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete section "${section.section_code}"? This will also delete all items within this section.`
+      )
+    ) {
+      deleteSectionMutation.mutate(section.id);
+    }
+  };
+
+  const handleDeleteItem = (item: Item) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete item "${item.item_code}"?`
+      )
+    ) {
+      deleteItemMutation.mutate(item.id);
+    }
+  };
+
+  const handleRecalculate = () => {
+    recalculateMutation.mutate();
   };
 
   // Drag and drop handlers
@@ -252,11 +253,7 @@ export default function BillDetail() {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (
-    e: React.DragEvent,
-    targetItem: Item,
-    sectionItems: Item[]
-  ) => {
+  const handleDrop = (e: React.DragEvent, targetItem: Item, items: Item[]) => {
     e.preventDefault();
 
     if (!draggedItem || draggedItem.id === targetItem.id) {
@@ -264,149 +261,128 @@ export default function BillDetail() {
       return;
     }
 
-    const draggedIndex = sectionItems.findIndex(
-      (item) => item.id === draggedItem.id
-    );
-    const targetIndex = sectionItems.findIndex(
-      (item) => item.id === targetItem.id
-    );
+    const draggedIndex = items.findIndex((item) => item.id === draggedItem.id);
+    const targetIndex = items.findIndex((item) => item.id === targetItem.id);
 
     if (draggedIndex === -1 || targetIndex === -1) {
       setDraggedItem(null);
       return;
     }
 
-    // Create reorder data
-    const reorderData = sectionItems.map((item, index) => {
-      let newOrder = index + 1;
+    // Create new order
+    const reorderedItems = [...items];
+    const [removed] = reorderedItems.splice(draggedIndex, 1);
+    reorderedItems.splice(targetIndex, 0, removed);
 
-      if (index === targetIndex) {
-        newOrder = draggedIndex + 1;
-      } else if (
-        draggedIndex < targetIndex &&
-        index > draggedIndex &&
-        index <= targetIndex
-      ) {
-        newOrder = index;
-      } else if (
-        draggedIndex > targetIndex &&
-        index >= targetIndex &&
-        index < draggedIndex
-      ) {
-        newOrder = index + 2;
-      }
-
-      return {
-        item_id: item.id,
-        new_sort_order: newOrder,
-      };
-    });
+    // Create reorder data with new sort orders
+    const reorderData = reorderedItems.map((item, index) => ({
+      item_id: item.id,
+      new_sort_order: index + 1,
+    }));
 
     reorderItemsMutation.mutate(reorderData);
     setDraggedItem(null);
   };
 
-  const getItemTypeBadge = (type: string) => {
-    const styles = {
-      MEASURED: "bg-blue-100 text-blue-800 border-blue-200",
-      LUMP_SUM: "bg-purple-100 text-purple-800 border-purple-200",
-      PRIME_COST: "bg-orange-100 text-orange-800 border-orange-200",
-      PROVISIONAL: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      ATTENDANT: "bg-gray-100 text-gray-800 border-gray-200",
-      COLLECTION: "bg-green-100 text-green-800 border-green-200",
-    };
-    return (
-      styles[type as keyof typeof styles] ||
-      "bg-gray-100 text-gray-800 border-gray-200"
-    );
+  const formatCurrency = (amount: number) => {
+    return `KES ${amount.toLocaleString("en-KE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-KE", {
-      style: "currency",
-      currency: "KES",
-      minimumFractionDigits: 0,
-    }).format(amount);
+  const getItemTypeBadge = (itemType: string) => {
+    const badges: { [key: string]: string } = {
+      MEASURED: "bg-blue-50 text-blue-700 border-blue-200 font-semibold",
+      LUMP_SUM: "bg-purple-50 text-purple-700 border-purple-200 font-semibold",
+      PC_SUM: "bg-amber-50 text-amber-700 border-amber-200 font-semibold",
+      PROVISIONAL:
+        "bg-orange-50 text-orange-700 border-orange-200 font-semibold",
+      PERCENTAGE: "bg-teal-50 text-teal-700 border-teal-200 font-semibold",
+      COLLECTION: "bg-gray-50 text-gray-700 border-gray-200 font-semibold",
+    };
+    return (
+      badges[itemType] ||
+      "bg-gray-50 text-gray-700 border-gray-200 font-semibold"
+    );
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading bill details...</div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-lg text-gray-900 font-medium">
+            Loading bill details...
+          </div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (error || !bill) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-red-600">
-          Error loading bill. Please check your connection and try again.
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-red-600 font-medium">
+            Error loading bill details. Please check your connection and try
+            again.
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout>
       {/* Header with Breadcrumbs */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="bg-white rounded-lg shadow-sm border mb-6">
+        <div className="px-6 py-4">
           {/* Breadcrumbs */}
-          <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
             <button
               onClick={() => router.push("/projects")}
-              className="flex items-center hover:text-blue-600 transition-colors"
+              className="flex items-center hover:text-gray-950 transition-colors font-medium"
             >
-              <Home className="w-4 h-4 mr-1" />
               Projects
             </button>
             <BreadcrumbChevron className="w-4 h-4" />
             <button
               onClick={() => router.push(`/projects/${projectId}`)}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-gray-950 transition-colors font-medium"
             >
               {project?.name || "Project"}
             </button>
             <BreadcrumbChevron className="w-4 h-4" />
             <button
               onClick={() => router.push(`/projects/${projectId}/boq`)}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-gray-950 transition-colors font-medium"
             >
               BOQ
             </button>
             <BreadcrumbChevron className="w-4 h-4" />
-            <span className="text-gray-900 font-medium">
+            <span className="text-gray-950 font-semibold">
               {bill.bill_number}
             </span>
           </nav>
 
+          {/* Bill Header */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push(`/projects/${projectId}/boq`)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {bill.bill_number}
-                </h1>
-                <p className="text-lg text-gray-600 mt-1">{bill.bill_title}</p>
-                {bill.description && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {bill.description}
-                  </p>
-                )}
-              </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-950 mb-1">
+                {bill.bill_number}
+              </h1>
+              <p className="text-lg text-gray-900 font-semibold mb-2">
+                {bill.bill_title}
+              </p>
+              {bill.description && (
+                <p className="text-gray-700 font-medium">{bill.description}</p>
+              )}
             </div>
-
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => recalculateMutation.mutate()}
+                onClick={handleRecalculate}
                 disabled={recalculateMutation.isPending}
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center space-x-2 transition-colors disabled:opacity-50"
+                className="bg-gray-100 text-gray-950 px-4 py-2.5 rounded-lg hover:bg-gray-200 flex items-center space-x-2 font-semibold transition-colors disabled:opacity-50"
               >
                 <Calculator className="w-4 h-4" />
                 <span>
@@ -415,301 +391,290 @@ export default function BillDetail() {
                     : "Recalculate"}
                 </span>
               </button>
+              <button
+                onClick={() => setShowCreateSectionForm(true)}
+                className="bg-gray-950 text-white px-4 py-2.5 rounded-lg hover:bg-gray-800 flex items-center space-x-2 font-medium transition-colors shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Section</span>
+              </button>
             </div>
-          </div>
-
-          {/* Bill Totals Header */}
-          <div className="mt-6">
-            <BillTotals
-              subtotal={calculations.subtotal}
-              contingencyPercentage={bill.contingency_percentage}
-              contingencyAmount={calculations.contingencyAmount}
-              totalAmount={calculations.totalAmount}
-              sectionCount={calculations.sectionCount}
-              itemCount={calculations.itemCount}
-            />
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center space-x-2">
-            <Building className="w-5 h-5" />
-            <span>Sections</span>
-          </h2>
-          <button
-            onClick={() => setShowCreateSectionForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Section</span>
-          </button>
-        </div>
+      {/* Bill Totals */}
+      <BillTotals
+        subtotal={calculations.subtotal}
+        contingencyPercentage={bill.contingency_percentage}
+        contingencyAmount={calculations.contingencyAmount}
+        totalAmount={calculations.totalAmount}
+        sectionCount={calculations.sectionCount}
+        itemCount={calculations.itemCount}
+      />
 
-        {/* Sections */}
-        <div className="space-y-6">
-          {bill.sections.map((section) => (
+      {/* Sections List */}
+      <div className="space-y-4">
+        {bill.sections.map((section) => (
+          <div
+            key={section.id}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          >
+            {/* Section Header */}
             <div
-              key={section.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+              className="bg-gray-50 border-b border-gray-200 p-5 cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={() => toggleSection(section.id)}
             >
-              {/* Section Header */}
-              <div
-                className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => toggleSection(section.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {expandedSections.has(section.id) ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    )}
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        {section.section_code}: {section.section_title}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 flex-1">
+                  {expandedSections.has(section.id) ? (
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-1">
+                      <span className="font-mono text-sm font-bold text-gray-950 bg-white px-3 py-1 rounded-md border border-gray-200">
+                        {section.section_code}
+                      </span>
+                      <h3 className="text-lg font-bold text-gray-950">
+                        {section.section_title}
                       </h3>
-                      {section.preamble && (
-                        <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-                          {section.preamble}
-                        </p>
-                      )}
+                    </div>
+                    {section.preamble && (
+                      <p className="text-sm text-gray-700 mt-2 font-medium leading-relaxed">
+                        {section.preamble}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-6">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-600 font-semibold mb-1">
+                      Section Total
+                    </div>
+                    <div className="text-xl font-bold text-gray-950">
+                      {formatCurrency(section.total_amount)}
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-6">
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600 mb-1">
-                        {formatCurrency(section.total_amount)}
-                      </div>
-                      <div className="text-sm text-gray-500 font-medium">
-                        {section.item_count} item
-                        {section.item_count !== 1 ? "s" : ""}
-                      </div>
-                    </div>
-                    <div className="flex space-x-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditSection(section);
-                        }}
-                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
-                        title="Edit Section"
-                      >
-                        <Edit className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSection(section);
-                        }}
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                        title="Delete Section"
-                        disabled={deleteSectionMutation.isPending}
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                      </button>
-                    </div>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditSection(section);
+                      }}
+                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                      title="Edit Section"
+                    >
+                      <Edit className="w-4 h-4 text-gray-600 hover:text-gray-950" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSection(section);
+                      }}
+                      className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete Section"
+                      disabled={deleteSectionMutation.isPending}
+                    >
+                      <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+                    </button>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Items */}
-              {expandedSections.has(section.id) && (
-                <div className="border-t border-gray-100">
-                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-semibold text-gray-900 flex items-center space-x-2">
-                        <Package className="w-4 h-4" />
-                        <span>Items</span>
-                        <span className="text-sm text-gray-500 font-normal">
-                          ({section.items.length})
-                        </span>
-                      </h4>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openItemForm(section.id);
-                        }}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 flex items-center space-x-2 transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>Add Item</span>
-                      </button>
+            {/* Section Items */}
+            {expandedSections.has(section.id) && (
+              <div>
+                {/* Add Item Button */}
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700 font-semibold">
+                      {section.item_count} item
+                      {section.item_count !== 1 ? "s" : ""} in this section
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openItemForm(section.id);
+                      }}
+                      className="bg-gray-950 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 flex items-center space-x-2 transition-colors font-medium shadow-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Item</span>
+                    </button>
                   </div>
+                </div>
 
-                  {section.items.length > 0 ? (
-                    <div className="divide-y divide-gray-100">
-                      {section.items.map((item, index) => (
-                        <div
-                          key={item.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, item)}
-                          onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, item, section.items)}
-                          className={`px-6 py-5 hover:bg-gray-50 transition-colors cursor-move ${
-                            draggedItem?.id === item.id ? "opacity-50" : ""
-                          }`}
-                        >
-                          <div className="flex items-start space-x-4">
-                            {/* Drag Handle */}
-                            <div className="flex items-center pt-1">
-                              <GripVertical className="w-4 h-4 text-gray-300" />
+                {section.items.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {section.items.map((item, index) => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, item)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, item, section.items)}
+                        className={`px-6 py-5 hover:bg-gray-50 transition-colors cursor-move ${
+                          draggedItem?.id === item.id ? "opacity-50" : ""
+                        }`}
+                      >
+                        <div className="flex items-start space-x-4">
+                          {/* Drag Handle */}
+                          <div className="flex items-center pt-1">
+                            <GripVertical className="w-4 h-4 text-gray-400" />
+                          </div>
+
+                          {/* Item Number */}
+                          <div className="flex items-center pt-1">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-gray-700">
+                                {index + 1}
+                              </span>
                             </div>
+                          </div>
 
-                            {/* Item Number */}
-                            <div className="flex items-center pt-1">
-                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                <span className="text-xs font-bold text-gray-600">
-                                  {index + 1}
-                                </span>
-                              </div>
-                            </div>
+                          {/* Item Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                {/* Item Header */}
+                                <div className="flex items-center space-x-3 mb-3">
+                                  <span className="font-mono text-sm font-bold text-gray-950 bg-gray-100 px-3 py-1 rounded-md">
+                                    {item.item_code}
+                                  </span>
+                                  <span
+                                    className={`px-3 py-1 text-xs rounded-full border ${getItemTypeBadge(
+                                      item.item_type
+                                    )}`}
+                                  >
+                                    {item.item_type.replace("_", " ")}
+                                  </span>
+                                </div>
 
-                            {/* Item Content */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  {/* Item Header */}
-                                  <div className="flex items-center space-x-3 mb-3">
-                                    <span className="font-mono text-sm font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-md">
-                                      {item.item_code}
+                                {/* Description */}
+                                <p className="text-gray-950 text-base leading-relaxed mb-4 pr-4 font-medium">
+                                  {item.description}
+                                </p>
+
+                                {/* Calculation Details */}
+                                <div className="grid grid-cols-3 gap-6 text-sm">
+                                  <div>
+                                    <span className="text-gray-600 font-semibold">
+                                      Quantity
                                     </span>
-                                    <span
-                                      className={`px-3 py-1 text-xs font-semibold rounded-full border ${getItemTypeBadge(
-                                        item.item_type
-                                      )}`}
-                                    >
-                                      {item.item_type.replace("_", " ")}
-                                    </span>
+                                    <div className="font-bold text-gray-950 text-lg">
+                                      {item.quantity.toLocaleString()}
+                                    </div>
                                   </div>
-
-                                  {/* Description */}
-                                  <p className="text-gray-900 text-base leading-relaxed mb-4 pr-4">
-                                    {item.description}
-                                  </p>
-
-                                  {/* Calculation Details */}
-                                  <div className="grid grid-cols-3 gap-6 text-sm">
-                                    <div>
-                                      <span className="text-gray-500 font-medium">
-                                        Quantity
-                                      </span>
-                                      <div className="font-semibold text-gray-900 text-lg">
-                                        {item.quantity.toLocaleString()}
-                                      </div>
+                                  <div>
+                                    <span className="text-gray-600 font-semibold">
+                                      Unit
+                                    </span>
+                                    <div className="font-bold text-gray-950 text-lg">
+                                      {item.unit}
                                     </div>
-                                    <div>
-                                      <span className="text-gray-500 font-medium">
-                                        Unit
-                                      </span>
-                                      <div className="font-semibold text-gray-900 text-lg">
-                                        {item.unit}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <span className="text-gray-500 font-medium">
-                                        Rate
-                                      </span>
-                                      <div className="font-semibold text-gray-900 text-lg">
-                                        {formatCurrency(item.rate)}
-                                      </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600 font-semibold">
+                                      Rate
+                                    </span>
+                                    <div className="font-bold text-gray-950 text-lg">
+                                      {formatCurrency(item.rate)}
                                     </div>
                                   </div>
                                 </div>
+                              </div>
 
-                                {/* Amount and Actions */}
-                                <div className="text-right ml-6">
-                                  <div className="text-2xl font-bold text-gray-900 mb-2">
-                                    {formatCurrency(item.amount)}
-                                  </div>
-                                  <div className="text-xs text-gray-500 mb-3">
-                                    {item.quantity} ×{" "}
-                                    {formatCurrency(item.rate)}
-                                  </div>
-                                  <div className="flex space-x-1">
-                                    <button
-                                      onClick={() =>
-                                        handleEditItem(item, section.id)
-                                      }
-                                      className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
-                                      title="Edit Item"
-                                    >
-                                      <Edit className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteItem(item)}
-                                      className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                                      title="Delete Item"
-                                      disabled={deleteItemMutation.isPending}
-                                    >
-                                      <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                                    </button>
-                                  </div>
+                              {/* Amount and Actions */}
+                              <div className="text-right ml-6">
+                                <div className="text-2xl font-bold text-gray-950 mb-2">
+                                  {formatCurrency(item.amount)}
+                                </div>
+                                <div className="text-xs text-gray-600 mb-3 font-medium">
+                                  {item.quantity} × {formatCurrency(item.rate)}
+                                </div>
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() =>
+                                      handleEditItem(item, section.id)
+                                    }
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
+                                    title="Edit Item"
+                                  >
+                                    <Edit className="w-4 h-4 text-gray-600 group-hover:text-gray-950" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteItem(item)}
+                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
+                                    title="Delete Item"
+                                    disabled={deleteItemMutation.isPending}
+                                  >
+                                    <Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600" />
+                                  </button>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-gray-500">
-                      <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        No items in this section
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        Add your first item to start building this section.
-                      </p>
-                      <button
-                        onClick={() => openItemForm(section.id)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Add First Item
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Collections */}
-              {expandedSections.has(section.id) && (
-                <div className="border-t border-gray-100">
-                  <div className="p-6">
-                    <CollectionsManagement
-                      projectId={projectId}
-                      sectionId={section.id}
-                    />
+                      </div>
+                    ))}
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-semibold text-gray-950 mb-2">
+                      No items in this section
+                    </h3>
+                    <p className="text-gray-700 mb-4 font-medium">
+                      Add your first item to start building this section.
+                    </p>
+                    <button
+                      onClick={() => openItemForm(section.id)}
+                      className="bg-gray-950 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors font-medium shadow-sm"
+                    >
+                      Add First Item
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-        {bill.sections.length === 0 && (
-          <div className="text-center py-16">
-            <Building className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              No sections found
-            </h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Add your first section to start building this bill. Sections help
-              organize different types of work.
-            </p>
-            <button
-              onClick={() => setShowCreateSectionForm(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Create First Section
-            </button>
+            {/* Collections */}
+            {expandedSections.has(section.id) && (
+              <div className="border-t border-gray-100">
+                <div className="p-6">
+                  <CollectionsManagement
+                    projectId={projectId}
+                    sectionId={section.id}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
+
+      {bill.sections.length === 0 && (
+        <div className="text-center py-16 bg-white rounded-lg shadow-sm border">
+          <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-950 mb-2">
+            No sections found
+          </h3>
+          <p className="text-gray-700 mb-6 max-w-md mx-auto font-medium">
+            Add your first section to start building this bill. Sections help
+            organize different types of work.
+          </p>
+          <button
+            onClick={() => setShowCreateSectionForm(true)}
+            className="bg-gray-950 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium shadow-sm"
+          >
+            Create First Section
+          </button>
+        </div>
+      )}
 
       {/* Create/Edit Section Modal */}
       <CreateSectionForm
@@ -734,6 +699,6 @@ export default function BillDetail() {
           editingItem={editingItem}
         />
       )}
-    </div>
+    </DashboardLayout>
   );
 }

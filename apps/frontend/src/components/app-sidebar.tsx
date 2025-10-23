@@ -59,8 +59,16 @@ export function AppSidebar() {
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild>
                           <a href="/projects">
+                            <Building2 />
+                            <span>All Projects</span>
+                          </a>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <a href="/projects">
                             <FileEdit />
-                            <span>BOQ Editor</span>
+                            <span>BOQs</span>
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -68,7 +76,7 @@ export function AppSidebar() {
                         <SidebarMenuSubButton asChild>
                           <a href="/projects/bids">
                             <Briefcase />
-                            <span>Project Bids</span>
+                            <span>Bids</span>
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -76,7 +84,7 @@ export function AppSidebar() {
                         <SidebarMenuSubButton asChild>
                           <a href="/projects/initialization">
                             <Rocket />
-                            <span>Project Initialization</span>
+                            <span>Initialization</span>
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -91,7 +99,7 @@ export function AppSidebar() {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
                       <Users />
-                      <span>Resource Workflow</span>
+                      <span>Resources Workflow</span>
                       <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -101,7 +109,7 @@ export function AppSidebar() {
                         <SidebarMenuSubButton asChild>
                           <a href="/resources/allocation">
                             <Users />
-                            <span>Resource Allocation</span>
+                            <span>Allocation</span>
                           </a>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

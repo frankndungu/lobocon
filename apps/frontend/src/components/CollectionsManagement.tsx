@@ -7,7 +7,6 @@ import {
   FileText,
   Tag,
   Book,
-  X,
   Save,
 } from "lucide-react";
 import { useCollections } from "@/hooks/useCollections";
@@ -148,7 +147,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
   // Collection type badge component
   const TypeBadge: React.FC<{ type: string }> = ({ type }) => (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
         COLLECTION_TYPE_COLORS[type as keyof typeof COLLECTION_TYPE_COLORS]
       }`}
     >
@@ -160,8 +159,10 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading collections...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-950"></div>
+        <span className="ml-2 text-gray-700 font-medium">
+          Loading collections...
+        </span>
       </div>
     );
   }
@@ -172,18 +173,18 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
       <div className="border-b border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Book className="w-5 h-5 mr-2 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-950 flex items-center">
+              <Book className="w-5 h-5 mr-2 text-gray-700" />
               Collections Management
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-700 mt-1 font-medium">
               Manage page references, document references, and item collections
             </p>
           </div>
           <button
             onClick={() => setShowCreateForm(true)}
             disabled={isCreating}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-gray-950 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors font-medium shadow-sm"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Collection
@@ -199,14 +200,14 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
               placeholder="Search collections..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white placeholder-gray-500 font-medium"
             />
           </div>
 
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white font-medium"
           >
             <option value="">All Types</option>
             {Object.entries(COLLECTION_TYPE_LABELS).map(([value, label]) => (
@@ -218,52 +219,62 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
         </div>
       </div>
 
-      {/* Collections list */}
-      <div className="divide-y divide-gray-200">
+      {/* Collections List */}
+      <div className="p-6">
         {filteredCollections.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="text-center py-12">
             <Book className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900">
-              No collections found
-            </h3>
-            <p className="text-gray-500">
+            <h3 className="text-lg font-semibold text-gray-950 mb-2">
               {searchQuery || filterType
-                ? "Try adjusting your filters"
-                : "Get started by adding your first collection"}
+                ? "No collections found"
+                : "No collections yet"}
+            </h3>
+            <p className="text-gray-700 font-medium mb-4">
+              {searchQuery || filterType
+                ? "Try adjusting your search or filter"
+                : "Add your first collection to track page references"}
             </p>
+            {!searchQuery && !filterType && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="bg-gray-950 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors font-medium shadow-sm"
+              >
+                Add First Collection
+              </button>
+            )}
           </div>
         ) : (
           filteredCollections.map((collection) => (
             <div
               key={collection.id}
-              className="p-4 hover:bg-gray-50 transition-colors"
+              className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all mb-3 last:mb-0"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium text-gray-900 mb-1">
+                  <h3 className="text-base font-bold text-gray-950 mb-1">
                     {collection.collection_title}
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-2">
+                  </h3>
+                  <p className="text-sm text-gray-700 mb-3 font-medium">
                     {collection.description}
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <TypeBadge type={collection.collection_type} />
 
-                    <span className="inline-flex items-center text-xs text-gray-500">
+                    <span className="inline-flex items-center text-xs text-gray-600 font-semibold">
                       <FileText className="w-3 h-3 mr-1" />
                       Page: {collection.page_reference}
                     </span>
 
                     {collection.document_reference && (
-                      <span className="inline-flex items-center text-xs text-gray-500">
+                      <span className="inline-flex items-center text-xs text-gray-600 font-semibold">
                         Doc: {collection.document_reference}
                       </span>
                     )}
                   </div>
 
                   {collection.notes && (
-                    <p className="text-xs text-gray-500 italic">
+                    <p className="text-xs text-gray-600 italic font-medium">
                       Note: {collection.notes}
                     </p>
                   )}
@@ -273,7 +284,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                   <button
                     onClick={() => handleEdit(collection)}
                     disabled={isUpdating}
-                    className="p-1 text-gray-400 hover:text-blue-600 disabled:opacity-50 transition-colors"
+                    className="p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-950 rounded-lg disabled:opacity-50 transition-colors"
                     title="Edit collection"
                   >
                     <Edit className="w-4 h-4" />
@@ -281,7 +292,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                   <button
                     onClick={() => handleDelete(collection.id)}
                     disabled={isDeleting}
-                    className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50 transition-colors"
+                    className="p-2 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg disabled:opacity-50 transition-colors"
                     title="Delete collection"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -295,11 +306,11 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
 
       {/* Create/Edit Form Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
             <form onSubmit={handleSubmit}>
               <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-bold text-gray-950">
                   {editingCollection
                     ? "Edit Collection"
                     : "Create New Collection"}
@@ -309,7 +320,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
                       Collection Title *
                     </label>
                     <input
@@ -322,13 +333,13 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                           collection_title: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white placeholder-gray-500 font-medium"
                       placeholder="Enter collection title"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
                       Collection Type *
                     </label>
                     <select
@@ -340,7 +351,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                           collection_type: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white font-medium"
                     >
                       {Object.entries(COLLECTION_TYPE_LABELS).map(
                         ([value, label]) => (
@@ -354,7 +365,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Description *
                   </label>
                   <textarea
@@ -364,14 +375,14 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                       setFormData({ ...formData, description: e.target.value })
                     }
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white placeholder-gray-500 font-medium"
                     placeholder="Enter collection description"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
                       Page Reference *
                     </label>
                     <input
@@ -384,13 +395,13 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                           page_reference: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white placeholder-gray-500 font-medium"
                       placeholder="e.g., P-001, Drawing 1.1"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
                       Document Reference
                     </label>
                     <input
@@ -402,14 +413,14 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                           document_reference: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white placeholder-gray-500 font-medium"
                       placeholder="e.g., SPEC-001, DWG-A001"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
                     Notes
                   </label>
                   <input
@@ -418,7 +429,7 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-950 focus:border-transparent text-gray-950 bg-white placeholder-gray-500 font-medium"
                     placeholder="Optional notes"
                   />
                 </div>
@@ -432,14 +443,14 @@ const CollectionsManagement: React.FC<CollectionsManagementProps> = ({
                     setEditingCollection(null);
                     resetForm();
                   }}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-950 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating || isUpdating}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-gray-950 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors font-medium shadow-sm"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   {isCreating || isUpdating
