@@ -51,19 +51,9 @@ export function BillsSummaryView({
     0
   );
 
-  // Calculate weighted average contingency based on bill amounts
-  let avgContingency = 0;
-  if (grandTotal > 0) {
-    avgContingency = bills.reduce((sum, bill) => {
-      const billAmount = Number(bill.total_amount) || 0;
-      const billContingency = Number(bill.contingency_percentage) || 0;
-      return sum + (billAmount * billContingency) / 100;
-    }, 0);
-    avgContingency = (avgContingency / grandTotal) * 100;
-  }
-
-  const contingencyAmount = (grandTotal * avgContingency) / 100;
-  const finalContractSum = grandTotal + contingencyAmount;
+  // Note: bill.total_amount already includes contingencies from backend
+  // So grandTotal is the final contract sum (no need to add contingencies again)
+  const finalContractSum = grandTotal;
 
   const formatCurrency = (amount: number) => {
     const num = Number(amount) || 0;
@@ -80,10 +70,6 @@ export function BillsSummaryView({
         <div className="divide-y divide-gray-100">
           {bills.map((bill, index) => {
             const billAmount = Number(bill.total_amount) || 0;
-            const percentage =
-              grandTotal > 0
-                ? ((billAmount / grandTotal) * 100).toFixed(1)
-                : "0.0";
 
             return (
               <div
@@ -112,13 +98,13 @@ export function BillsSummaryView({
                     </div>
                   </div>
 
-                  {/* Right: Amount and Percentage */}
+                  {/* Right: Amount and Contingency */}
                   <div className="text-right">
                     <div className="text-3xl font-bold text-gray-950 mb-2">
                       {formatCurrency(billAmount)}
                     </div>
                     <div className="text-base text-gray-600 font-medium">
-                      {percentage}% of total
+                      +{bill.contingency_percentage || 0}% of total
                     </div>
                   </div>
                 </div>
@@ -137,23 +123,6 @@ export function BillsSummaryView({
           </div>
           <div className="text-4xl font-bold text-blue-600">
             {formatCurrency(grandTotal)}
-          </div>
-        </div>
-      </div>
-
-      {/* Contingencies */}
-      <div className="bg-amber-50 border-2 border-amber-200 rounded-xl px-10 py-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xl font-bold text-gray-950 mb-2">
-              Add {avgContingency.toFixed(1)}% Contingencies
-            </div>
-            <div className="text-base text-gray-600 font-medium">
-              As per contract conditions
-            </div>
-          </div>
-          <div className="text-4xl font-bold text-amber-600">
-            {formatCurrency(contingencyAmount)}
           </div>
         </div>
       </div>

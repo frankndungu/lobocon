@@ -15,7 +15,7 @@ interface KSMMClause {
 }
 
 interface KSMMSearchProps {
-  onSelect?: (clause: KSMMClause) => void; // Made optional for reference-only mode
+  onSelect?: (clause: KSMMClause) => void;
   placeholder?: string;
   className?: string;
   showTemplateOptions?: boolean;
@@ -33,7 +33,13 @@ export default function KSMMSearch({
   const [templateMode, setTemplateMode] = useState<"full" | "title" | "custom">(
     "full"
   );
+  const [isMounted, setIsMounted] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Ensure component is mounted before rendering dynamic content
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Get available section codes for quick reference
   const { data: sectionCodes } = useQuery({
@@ -42,6 +48,7 @@ export default function KSMMSearch({
       const response = await api.get<string[]>("/clauses/sections/codes");
       return response.data;
     },
+    enabled: isMounted,
   });
 
   const { data: clauses, isLoading } = useQuery({
@@ -53,13 +60,11 @@ export default function KSMMSearch({
       );
       return response.data;
     },
-    enabled: searchTerm.length >= 1,
+    enabled: searchTerm.length >= 1 && isMounted,
   });
 
   const handleSelect = (clause: KSMMClause) => {
     setSelectedClause(clause);
-    // ✅ REMOVED: No longer automatically populates description
-    // Users must manually copy what they want using the copy buttons
     setIsOpen(false);
   };
 
@@ -85,11 +90,22 @@ export default function KSMMSearch({
       default:
         content = clause.contents;
     }
-    navigator.clipboard.writeText(content);
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(content).catch(console.error);
+    }
+  };
+
+  const copyReference = (reference: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(reference).catch(console.error);
+    }
   };
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (!isMounted) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         searchRef.current &&
@@ -101,13 +117,53 @@ export default function KSMMSearch({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
+    if (!isMounted) return;
+
     setIsOpen(
       searchTerm.length >= 1 && Boolean(clauses?.length) && !selectedClause
     );
-  }, [searchTerm, clauses, selectedClause]);
+  }, [searchTerm, clauses, selectedClause, isMounted]);
+
+  // Don't render dynamic content until mounted
+  if (!isMounted) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        {/* Template Mode Selection - Static during SSR */}
+        {showTemplateOptions && (
+          <div className="flex items-center space-x-4">
+            <span className="text-xs font-medium text-gray-600">Template:</span>
+            <div className="flex space-x-2">
+              <div className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                Full Content
+              </div>
+              <div className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                Title Only
+              </div>
+              <div className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                Title + Content
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search Input - Static during SSR */}
+        <div className="relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              className="w-full pl-10 pr-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-gray-400 text-sm"
+              placeholder={placeholder}
+              disabled
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -210,11 +266,12 @@ export default function KSMMSearch({
                   return (
                     <div
                       key={clause.id}
-                      className="relative group"
+                      className="relative group border-b border-gray-100 last:border-b-0"
                       title={`Full Reference: ${clause.clause_reference}`}
                     >
-                      <button
-                        className="w-full p-4 text-left hover:bg-blue-50 transition-colors group"
+                      {/* Main Content Area - NOT a button, just clickable div */}
+                      <div
+                        className="w-full p-4 cursor-pointer hover:bg-blue-50 transition-colors"
                         onClick={() => handleSelect(clause)}
                       >
                         <div className="flex items-start space-x-3">
@@ -229,7 +286,7 @@ export default function KSMMSearch({
                               </span>
                             </div>
 
-                            {/* Clause Reference - Always visible */}
+                            {/* Clause Reference */}
                             <div className="text-gray-600 text-xs mb-2 leading-relaxed">
                               <span className="font-medium">Reference: </span>
                               <span className="italic">
@@ -250,38 +307,36 @@ export default function KSMMSearch({
                               {clause.contents.length} chars
                             </div>
                           </div>
-
-                          {/* Copy buttons */}
-                          <div className="flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-all">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                copyClauseContent(clause);
-                              }}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-all cursor-pointer rounded"
-                              title="Copy template content"
-                            >
-                              <Copy className="w-3 h-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(
-                                  clause.clause_reference
-                                );
-                              }}
-                              className="p-1 text-gray-400 hover:text-green-600 transition-all cursor-pointer rounded"
-                              title="Copy full reference"
-                            >
-                              <FileText className="w-3 h-3" />
-                            </button>
-                          </div>
                         </div>
-                      </button>
+                      </div>
+
+                      {/* Copy buttons - OUTSIDE the clickable area, positioned absolutely */}
+                      <div className="absolute top-4 right-4 flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            copyClauseContent(clause);
+                          }}
+                          className="p-1 text-gray-400 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer rounded"
+                          title="Copy template content"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            copyReference(clause.clause_reference);
+                          }}
+                          className="p-1 text-gray-400 hover:text-green-600 hover:bg-white hover:shadow-sm transition-all cursor-pointer rounded"
+                          title="Copy full reference"
+                        >
+                          <FileText className="w-3 h-3" />
+                        </button>
+                      </div>
 
                       {/* Hover tooltip for full reference */}
                       <div className="absolute left-0 top-full mt-2 w-full max-w-md bg-gray-900 text-white text-xs p-3 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
@@ -339,6 +394,7 @@ export default function KSMMSearch({
               </div>
             </div>
             <button
+              type="button"
               onClick={clearSelection}
               className="p-1 text-blue-400 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors ml-2"
               title="Clear selection"
