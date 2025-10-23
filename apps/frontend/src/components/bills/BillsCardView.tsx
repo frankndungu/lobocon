@@ -52,7 +52,8 @@ export function BillsCardView({
   };
 
   const formatCurrency = (amount: number) => {
-    return `Ksh ${amount.toLocaleString("en-US", {
+    const num = Number(amount) || 0;
+    return `Ksh ${num.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -174,7 +175,7 @@ export function BillsCardView({
                   Total Amount
                 </div>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(bill.total_amount || 0)}
+                  {formatCurrency(Number(bill.total_amount) || 0)}
                 </div>
               </div>
 

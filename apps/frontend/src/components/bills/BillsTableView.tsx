@@ -40,7 +40,8 @@ export function BillsTableView({
   };
 
   const formatCurrency = (amount: number) => {
-    return `Ksh ${amount.toLocaleString("en-US", {
+    const num = Number(amount) || 0;
+    return `Ksh ${num.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -162,7 +163,7 @@ export function BillsTableView({
                   {/* Amount */}
                   <td className="px-6 py-4 text-right">
                     <div className="font-bold text-green-600 text-lg">
-                      {formatCurrency(bill.total_amount || 0)}
+                      {formatCurrency(Number(bill.total_amount) || 0)}
                     </div>
                   </td>
 
