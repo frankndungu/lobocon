@@ -12,10 +12,8 @@ import {
   Trash2,
   Calculator,
   ChevronRight as BreadcrumbChevron,
-  Home,
   Building,
   Package,
-  GripVertical,
 } from "lucide-react";
 import CreateSectionForm from "@/components/forms/CreateSectionForm";
 import CreateItemForm from "@/components/forms/CreateItemForm";
@@ -79,7 +77,7 @@ export default function BillDetail() {
   );
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [draggedItem, setDraggedItem] = useState<Item | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
 
   const queryClient = useQueryClient();
 
@@ -163,22 +161,6 @@ export default function BillDetail() {
     },
   });
 
-  // Reorder items mutation
-  const reorderItemsMutation = useMutation({
-    mutationFn: async (
-      reorderData: { item_id: number; new_sort_order: number }[]
-    ) => {
-      await api.patch(`/boq/items/reorder`, { items: reorderData });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bill-full", billId] });
-    },
-    onError: (error) => {
-      console.error("Error reordering items:", error);
-      alert("Failed to reorder items. Please try again.");
-    },
-  });
-
   const calculations = useCalculations(
     bill || {
       sections: [],
@@ -194,6 +176,16 @@ export default function BillDetail() {
       newExpanded.add(sectionId);
     }
     setExpandedSections(newExpanded);
+  };
+
+  const toggleItemSelection = (itemId: number) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
   };
 
   const openItemForm = (sectionId: number) => {
@@ -242,53 +234,18 @@ export default function BillDetail() {
     recalculateMutation.mutate();
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, item: Item) => {
-    setDraggedItem(item);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-
-  const handleDrop = (e: React.DragEvent, targetItem: Item, items: Item[]) => {
-    e.preventDefault();
-
-    if (!draggedItem || draggedItem.id === targetItem.id) {
-      setDraggedItem(null);
-      return;
-    }
-
-    const draggedIndex = items.findIndex((item) => item.id === draggedItem.id);
-    const targetIndex = items.findIndex((item) => item.id === targetItem.id);
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedItem(null);
-      return;
-    }
-
-    // Create new order
-    const reorderedItems = [...items];
-    const [removed] = reorderedItems.splice(draggedIndex, 1);
-    reorderedItems.splice(targetIndex, 0, removed);
-
-    // Create reorder data with new sort orders
-    const reorderData = reorderedItems.map((item, index) => ({
-      item_id: item.id,
-      new_sort_order: index + 1,
-    }));
-
-    reorderItemsMutation.mutate(reorderData);
-    setDraggedItem(null);
-  };
-
   const formatCurrency = (amount: number) => {
-    return `KES ${amount.toLocaleString("en-KE", {
+    return `KES ${amount.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+  };
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   const getItemTypeBadge = (itemType: string) => {
@@ -509,111 +466,106 @@ export default function BillDetail() {
                 </div>
 
                 {section.items.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
+                  <div className="p-6 space-y-4">
                     {section.items.map((item, index) => (
                       <div
                         key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, item, section.items)}
-                        className={`px-6 py-5 hover:bg-gray-50 transition-colors cursor-move ${
-                          draggedItem?.id === item.id ? "opacity-50" : ""
-                        }`}
+                        className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all"
                       >
                         <div className="flex items-start space-x-4">
-                          {/* Drag Handle */}
+                          {/* Checkbox */}
                           <div className="flex items-center pt-1">
-                            <GripVertical className="w-4 h-4 text-gray-400" />
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.has(item.id)}
+                              onChange={() => toggleItemSelection(item.id)}
+                              className="w-4 h-4 text-gray-950 border-gray-300 rounded focus:ring-gray-950"
+                            />
                           </div>
 
                           {/* Item Number */}
                           <div className="flex items-center pt-1">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                              <span className="text-xs font-bold text-gray-700">
-                                {index + 1}
-                              </span>
+                            <div className="text-sm font-bold text-gray-700">
+                              {index + 1}.{String(index + 1).padStart(2, "0")}
                             </div>
                           </div>
 
                           {/* Item Content */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                {/* Item Header */}
-                                <div className="flex items-center space-x-3 mb-3">
-                                  <span className="font-mono text-sm font-bold text-gray-950 bg-gray-100 px-3 py-1 rounded-md">
-                                    {item.item_code}
-                                  </span>
-                                  <span
-                                    className={`px-3 py-1 text-xs rounded-full border ${getItemTypeBadge(
-                                      item.item_type
-                                    )}`}
-                                  >
-                                    {item.item_type.replace("_", " ")}
-                                  </span>
-                                </div>
-
-                                {/* Description */}
-                                <p className="text-gray-950 text-base leading-relaxed mb-4 pr-4 font-medium">
-                                  {item.description}
-                                </p>
-
-                                {/* Calculation Details */}
-                                <div className="grid grid-cols-3 gap-6 text-sm">
-                                  <div>
-                                    <span className="text-gray-600 font-semibold">
-                                      Quantity
-                                    </span>
-                                    <div className="font-bold text-gray-950 text-lg">
-                                      {item.quantity.toLocaleString()}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600 font-semibold">
-                                      Unit
-                                    </span>
-                                    <div className="font-bold text-gray-950 text-lg">
-                                      {item.unit}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600 font-semibold">
-                                      Rate
-                                    </span>
-                                    <div className="font-bold text-gray-950 text-lg">
-                                      {formatCurrency(item.rate)}
-                                    </div>
-                                  </div>
-                                </div>
+                            {/* Item Header with badges and actions */}
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center space-x-3">
+                                <span className="font-mono text-sm font-bold text-gray-950 bg-gray-100 px-3 py-1 rounded-md">
+                                  {item.item_code}
+                                </span>
+                                <span
+                                  className={`px-3 py-1 text-xs rounded-full border ${getItemTypeBadge(
+                                    item.item_type
+                                  )}`}
+                                >
+                                  {item.item_type.replace("_", " ")}
+                                </span>
                               </div>
 
-                              {/* Amount and Actions */}
-                              <div className="text-right ml-6">
-                                <div className="text-2xl font-bold text-gray-950 mb-2">
+                              {/* Action Icons - Only Edit and Delete */}
+                              <div className="flex items-center space-x-1">
+                                <button
+                                  onClick={() =>
+                                    handleEditItem(item, section.id)
+                                  }
+                                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                  title="Edit Item"
+                                >
+                                  <Edit className="w-4 h-4 text-gray-600 hover:text-gray-950" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteItem(item)}
+                                  className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Delete Item"
+                                  disabled={deleteItemMutation.isPending}
+                                >
+                                  <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Description */}
+                            <p className="text-gray-950 text-base leading-relaxed mb-4 font-medium">
+                              {item.description}
+                            </p>
+
+                            {/* Calculation Details in Grid */}
+                            <div className="grid grid-cols-4 gap-6 text-sm">
+                              <div>
+                                <span className="text-gray-600 font-medium block mb-1">
+                                  Quantity
+                                </span>
+                                <div className="font-bold text-gray-950">
+                                  {formatNumber(item.quantity)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-gray-600 font-medium block mb-1">
+                                  Unit
+                                </span>
+                                <div className="font-bold text-gray-950">
+                                  {item.unit}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-gray-600 font-medium block mb-1">
+                                  Rate
+                                </span>
+                                <div className="font-bold text-gray-950">
+                                  {formatCurrency(item.rate)}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-gray-600 font-medium block mb-1">
+                                  Amount
+                                </span>
+                                <div className="font-bold text-gray-950 text-base">
                                   {formatCurrency(item.amount)}
-                                </div>
-                                <div className="text-xs text-gray-600 mb-3 font-medium">
-                                  {item.quantity} × {formatCurrency(item.rate)}
-                                </div>
-                                <div className="flex space-x-1">
-                                  <button
-                                    onClick={() =>
-                                      handleEditItem(item, section.id)
-                                    }
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors group"
-                                    title="Edit Item"
-                                  >
-                                    <Edit className="w-4 h-4 text-gray-600 group-hover:text-gray-950" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteItem(item)}
-                                    className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                                    title="Delete Item"
-                                    disabled={deleteItemMutation.isPending}
-                                  >
-                                    <Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600" />
-                                  </button>
                                 </div>
                               </div>
                             </div>

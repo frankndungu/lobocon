@@ -1,37 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Bill } from "@/lib/types";
 import {
   Plus,
-  Calculator,
+  Search,
+  Filter,
   FileText,
-  Edit,
-  Trash2,
-  ChevronRight as BreadcrumbChevron,
-  Home,
+  LayoutGrid,
+  Table as TableIcon,
+  BarChart3,
+  TrendingUp,
+  UploadIcon,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
 import CreateBillForm from "@/components/forms/CreateBillForm";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { BillsCardView } from "@/components/bills/BillsCardView";
+import { BillsTableView } from "@/components/bills/BillsTableView";
+import { BillsSummaryView } from "@/components/bills/BillsSummaryView";
 
 interface Project {
   id: string;
   name: string;
+  code: string;
+  client?: string;
+  city?: string;
+  start_date?: string;
 }
+
+type ViewMode = "card" | "table" | "summary";
 
 export default function BOQManagement() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.id as string;
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("card");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const queryClient = useQueryClient();
 
-  // Fetch project details for breadcrumb
+  // Fetch project details
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
@@ -40,6 +54,7 @@ export default function BOQManagement() {
     },
   });
 
+  // Fetch bills
   const {
     data: bills,
     isLoading,
@@ -50,7 +65,6 @@ export default function BOQManagement() {
       const response = await api.get<Bill[]>(
         `/boq/bills?project_id=${projectId}`
       );
-      // Sort bills by extracting numbers from bill_number
       const sortedBills = response.data.sort((a, b) => {
         const aNum = parseInt(a.bill_number.replace(/\D/g, "") || "0");
         const bNum = parseInt(b.bill_number.replace(/\D/g, "") || "0");
@@ -60,6 +74,7 @@ export default function BOQManagement() {
     },
   });
 
+  // Delete bill mutation
   const deleteBillMutation = useMutation({
     mutationFn: async (billId: number) => {
       await api.delete(`/boq/bills/${billId}`);
@@ -73,6 +88,7 @@ export default function BOQManagement() {
     },
   });
 
+  // Recalculate bill mutation
   const recalculateBillMutation = useMutation({
     mutationFn: async (billId: number) => {
       await api.post(`/boq/bills/${billId}/recalculate`);
@@ -85,6 +101,13 @@ export default function BOQManagement() {
       alert("Failed to recalculate bill. Please try again.");
     },
   });
+
+  // Calculate total project value
+  const totalProjectValue =
+    bills?.reduce((sum, bill) => {
+      const amount = Number(bill.total_amount) || 0;
+      return sum + amount;
+    }, 0) || 0;
 
   const handleDeleteBill = (bill: Bill) => {
     if (
@@ -102,6 +125,27 @@ export default function BOQManagement() {
 
   const handleViewBill = (billId: number) => {
     router.push(`/projects/${projectId}/boq/bills/${billId}`);
+  };
+
+  const handleCreateClick = () => {
+    setShowCreateForm(true);
+  };
+
+  const formatCurrency = (amount: number) => {
+    const num = Number(amount) || 0; // ✅ Extra safety
+    return `Ksh ${num.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   if (isLoading) {
@@ -130,174 +174,177 @@ export default function BOQManagement() {
 
   return (
     <DashboardLayout>
-      {/* Header with Breadcrumbs */}
-      <div className="bg-white rounded-lg shadow-sm border mb-6">
-        <div className="px-6 py-4">
-          {/* Breadcrumbs */}
-          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-            <button
-              onClick={() => router.push("/projects")}
-              className="flex items-center hover:text-gray-950 transition-colors font-medium"
-            >
-              Projects
-            </button>
-            <BreadcrumbChevron className="w-4 h-4" />
-            <button
-              onClick={() => router.push(`/projects/${projectId}`)}
-              className="hover:text-gray-950 transition-colors font-medium"
-            >
-              {project?.name || "Project"}
-            </button>
-            <BreadcrumbChevron className="w-4 h-4" />
-            <span className="text-gray-950 font-semibold">BOQ</span>
-          </nav>
-
-          <div className="flex items-center justify-between">
+      {/* Top Section - Project Header */}
+      <div className="mb-8">
+        <div className="flex items-start justify-between">
+          {/* Left: Project Info */}
+          <div className="flex items-start space-x-4">
+            <div className="w-14 h-14 bg-white rounded-lg border border-gray-200 flex items-center justify-center shadow-sm">
+              <FileText className="w-7 h-7 text-gray-700" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-950">
-                Bill of Quantities
+              <h1 className="text-3xl font-bold text-gray-950 mb-2">
+                {project?.name || "Project"}
               </h1>
-              <p className="text-gray-700 mt-1 font-medium">
-                {project?.name || "Project"} BOQ Management
+              <p className="text-sm text-gray-600 font-medium mb-3">
+                {project?.code || "N/A"}
               </p>
-            </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-gray-950 text-white px-6 py-2.5 rounded-lg hover:bg-gray-800 flex items-center space-x-2 font-medium transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create New Bill</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bills Grid */}
-      <div>
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-950">Bills Overview</h2>
-          <p className="text-gray-700 mt-1 font-medium">
-            {bills?.length || 0} bill{bills?.length !== 1 ? "s" : ""} in this
-            project
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {bills?.map((bill) => (
-            <div
-              key={bill.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all p-6"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-950 mb-2">
-                    {bill.bill_number}
-                  </h3>
-                  <p className="text-lg text-gray-900 font-semibold mb-3">
-                    {bill.bill_title}
-                  </p>
-                  {bill.description && (
-                    <p className="text-sm text-gray-700 leading-relaxed line-clamp-2 font-medium">
-                      {bill.description}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-start space-x-3 ml-6">
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600 mb-1">
-                      KES {Number(bill.total_amount || 0).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-600 font-semibold">
-                      +{bill.contingency_percentage || 0}% contingency
-                    </div>
-                  </div>
-                  <div className="flex flex-col space-y-2 ml-2">
-                    <button
-                      onClick={() => setEditingBill(bill)}
-                      className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-950 transition-colors"
-                      title="Edit Bill"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBill(bill)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-600 transition-colors"
-                      title="Delete Bill"
-                      disabled={deleteBillMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-950 mb-1">
-                    {bill.section_count || 0}
-                  </div>
-                  <div className="text-sm font-semibold text-gray-700">
-                    Section{bill.section_count !== 1 ? "s" : ""}
-                  </div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-950 mb-1">
-                    {bill.item_count || 0}
-                  </div>
-                  <div className="text-sm font-semibold text-gray-700">
-                    Item{bill.item_count !== 1 ? "s" : ""}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  className="flex-1 bg-gray-950 text-white py-2.5 px-4 rounded-lg hover:bg-gray-800 flex items-center justify-center space-x-2 font-medium transition-colors shadow-sm"
-                  onClick={() => handleViewBill(bill.id)}
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>View Details</span>
-                </button>
-                <button
-                  className="flex-1 bg-gray-100 text-gray-950 py-2.5 px-4 rounded-lg hover:bg-gray-200 flex items-center justify-center space-x-2 font-semibold transition-colors disabled:opacity-50"
-                  onClick={() => handleRecalculate(bill.id)}
-                  disabled={recalculateBillMutation.isPending}
-                >
-                  <Calculator className="w-4 h-4" />
-                  <span>
-                    {recalculateBillMutation.isPending
-                      ? "Calculating..."
-                      : "Recalculate"}
+              <div className="flex items-center space-x-6 text-sm">
+                <div>
+                  <span className="text-gray-600 font-medium">Client: </span>
+                  <span className="text-gray-950 font-semibold">
+                    {project?.client || "N/A"}
                   </span>
-                </button>
+                </div>
+                <div>
+                  <span className="text-gray-600 font-medium">Location: </span>
+                  <span className="text-gray-950 font-semibold">
+                    {project?.city || "Nairobi"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600 font-medium">Date: </span>
+                  <span className="text-gray-950 font-semibold">
+                    {formatDate(project?.start_date)}
+                  </span>
+                </div>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Right: Total Project Value Card */}
+          <div className="bg-gray-950 text-white rounded-xl px-8 py-6 shadow-lg min-w-[320px]">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-medium opacity-90">
+                Total Project Value
+              </span>
+            </div>
+            <div className="text-3xl font-bold">
+              {formatCurrency(totalProjectValue)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons Row */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search bills..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-medium text-sm w-64"
+            />
+          </div>
+
+          {/* Filter Button */}
+          <button className="bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center space-x-2 font-medium transition-colors text-sm">
+            <Filter className="w-4 h-4" />
+            <span>Filter</span>
+          </button>
+
+          {/* Export PDF Button */}
+          <button className="bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center space-x-2 font-medium transition-colors text-sm">
+            <UploadIcon className="w-4 h-4" />
+            <span>Export PDF</span>
+          </button>
+
+          {/* Export Excel Button */}
+          <button className="bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center space-x-2 font-medium transition-colors text-sm">
+            <UploadIcon className="w-4 h-4" />
+            <span>Export Excel</span>
+          </button>
+        </div>
+      </div>
+
+      {/* View Mode and Create Button Row */}
+      <div className="mb-6 flex items-center justify-between">
+        {/* View Mode Icons */}
+        <div className="flex items-center space-x-2 bg-white rounded-lg border border-gray-200 p-1">
+          <button
+            onClick={() => setViewMode("card")}
+            className={`p-2 rounded-md transition-colors ${
+              viewMode === "card"
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            }`}
+            title="Card View"
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            className={`p-2 rounded-md transition-colors ${
+              viewMode === "table"
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            }`}
+            title="Table View"
+          >
+            <TableIcon className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("summary")}
+            className={`p-2 rounded-md transition-colors ${
+              viewMode === "summary"
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            }`}
+            title="Summary View"
+          >
+            <BarChart3 className="w-4 h-4" />
+          </button>
         </div>
 
-        {bills?.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-lg shadow-sm border">
-            <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-              <FileText className="w-10 h-10 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-950 mb-3">
-              No bills found
-            </h3>
-            <p className="text-gray-700 mb-8 max-w-md mx-auto leading-relaxed font-medium">
-              Create your first bill to start building the BOQ for this project.
-              Bills help you organize different aspects of your construction
-              project.
-            </p>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-gray-950 text-white px-8 py-3 rounded-lg hover:bg-gray-800 flex items-center space-x-3 mx-auto font-medium transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create Your First Bill</span>
-            </button>
-          </div>
-        )}
+        {/* Create New Bill Button */}
+        <button
+          onClick={handleCreateClick}
+          className="bg-gray-950 text-white px-6 py-2.5 rounded-lg hover:bg-gray-800 flex items-center space-x-2 font-medium transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Create New Bill</span>
+        </button>
       </div>
+
+      {/* Render View Based on Mode */}
+      {viewMode === "card" && (
+        <BillsCardView
+          bills={bills || []}
+          onViewBill={handleViewBill}
+          onEditBill={setEditingBill}
+          onDeleteBill={handleDeleteBill}
+          onRecalculate={handleRecalculate}
+          onCreateClick={handleCreateClick}
+          isRecalculating={recalculateBillMutation.isPending}
+          isDeleting={deleteBillMutation.isPending}
+        />
+      )}
+
+      {viewMode === "table" && (
+        <BillsTableView
+          bills={bills || []}
+          onViewBill={handleViewBill}
+          onEditBill={setEditingBill}
+          onDeleteBill={handleDeleteBill}
+          onRecalculate={handleRecalculate}
+          onCreateClick={handleCreateClick}
+          isRecalculating={recalculateBillMutation.isPending}
+          isDeleting={deleteBillMutation.isPending}
+        />
+      )}
+
+      {viewMode === "summary" && (
+        <BillsSummaryView
+          bills={bills || []}
+          onViewBill={handleViewBill}
+          onCreateClick={handleCreateClick}
+        />
+      )}
 
       {/* Create/Edit Bill Modal */}
       <CreateBillForm
