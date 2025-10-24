@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Bill } from "@/lib/types";
@@ -74,6 +74,21 @@ export default function BOQManagement() {
     },
   });
 
+  // Filter bills based on search query (client-side filtering)
+  const filteredBills = useMemo(() => {
+    if (!bills) return [];
+    if (!searchQuery.trim()) return bills;
+
+    const query = searchQuery.toLowerCase();
+    return bills.filter((bill) => {
+      return (
+        bill.bill_number.toLowerCase().includes(query) ||
+        bill.bill_title.toLowerCase().includes(query) ||
+        bill.description?.toLowerCase().includes(query)
+      );
+    });
+  }, [bills, searchQuery]);
+
   // Delete bill mutation
   const deleteBillMutation = useMutation({
     mutationFn: async (billId: number) => {
@@ -102,7 +117,7 @@ export default function BOQManagement() {
     },
   });
 
-  // Calculate total project value
+  // Calculate total project value from ALL bills (not filtered)
   const totalProjectValue =
     bills?.reduce((sum, bill) => {
       const amount = Number(bill.total_amount) || 0;
@@ -132,7 +147,7 @@ export default function BOQManagement() {
   };
 
   const formatCurrency = (amount: number) => {
-    const num = Number(amount) || 0; // ✅ Extra safety
+    const num = Number(amount) || 0;
     return `Ksh ${num.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -230,7 +245,7 @@ export default function BOQManagement() {
       {/* Action Buttons Row */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          {/* Search Input */}
+          {/* Search Input - NOW WORKING */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -311,10 +326,18 @@ export default function BOQManagement() {
         </button>
       </div>
 
-      {/* Render View Based on Mode */}
+      {/* Search Results Indicator */}
+      {searchQuery && (
+        <div className="mb-4 text-sm text-gray-600 font-medium">
+          Found {filteredBills.length} bill
+          {filteredBills.length !== 1 ? "s" : ""} matching "{searchQuery}"
+        </div>
+      )}
+
+      {/* Render View Based on Mode - USING FILTERED BILLS */}
       {viewMode === "card" && (
         <BillsCardView
-          bills={bills || []}
+          bills={filteredBills}
           onViewBill={handleViewBill}
           onEditBill={setEditingBill}
           onDeleteBill={handleDeleteBill}
@@ -327,7 +350,7 @@ export default function BOQManagement() {
 
       {viewMode === "table" && (
         <BillsTableView
-          bills={bills || []}
+          bills={filteredBills}
           onViewBill={handleViewBill}
           onEditBill={setEditingBill}
           onDeleteBill={handleDeleteBill}
@@ -340,7 +363,7 @@ export default function BOQManagement() {
 
       {viewMode === "summary" && (
         <BillsSummaryView
-          bills={bills || []}
+          bills={filteredBills}
           onViewBill={handleViewBill}
           onCreateClick={handleCreateClick}
         />

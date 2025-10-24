@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 import CreateProjectForm from "@/components/forms/CreateProjectForm";
 import { DashboardLayout } from "@/components/dashboard-layout";
-import { ProjectsCardView } from "@/components/ProjectsCardView";
-import { ProjectsTable } from "@/components/ProjectsTable";
-import { ProjectsMapView } from "@/components/ProjectsMapView";
+import { ProjectsCardView } from "@/components/projects/ProjectsCardView";
+import { ProjectsTable } from "@/components/projects/ProjectsTable";
+import { ProjectsMapView } from "@/components/projects/ProjectsMapView";
 
 type ViewMode = "card" | "table" | "map";
 

@@ -5,7 +5,7 @@ import { Bill } from "@/lib/types";
 import {
   MoreVertical,
   FileText,
-  BarChart3,
+  Activity,
   Calculator,
   Trash2,
   Plus,
@@ -88,7 +88,7 @@ export function BillsCardView({
         return (
           <div
             key={bill.id}
-            className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all relative"
+            className="bg-white rounded-lg border border-gray-200 hover:shadow-lg hover:border-gray-400 transition-all relative"
           >
             <div className="p-6">
               {/* Header with Title and More Icon */}
@@ -162,7 +162,7 @@ export function BillsCardView({
                   </span>
                 </div>
                 <div className="flex items-center text-sm text-gray-700">
-                  <BarChart3 className="w-4 h-4 mr-2 text-gray-500" />
+                  <Activity className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">
                     Contingency: +{bill.contingency_percentage || 0}%
                   </span>
