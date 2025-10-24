@@ -45,7 +45,7 @@ export default function ProjectSelection() {
   );
 
   const handleProjectClick = (projectId: string) => {
-    window.location.href = `/projects/${projectId}/boq`;
+    window.location.href = `/projects/${projectId}/`;
   };
 
   const handleCreateClick = () => {

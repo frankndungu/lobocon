@@ -2,9 +2,6 @@
 
 import {
   Building2,
-  FileEdit,
-  Briefcase,
-  Rocket,
   Users,
   Network,
   CheckSquare,
@@ -24,16 +21,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ChevronRight } from "lucide-react";
 
 export function AppSidebar() {
   return (
@@ -44,81 +32,27 @@ export function AppSidebar() {
           <SidebarGroupLabel>Project Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Projects - Collapsible */}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <Building2 />
-                      <span>Projects</span>
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <a href="/projects">
-                            <Building2 />
-                            <span>All Projects</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <a href="/projects">
-                            <FileEdit />
-                            <span>BOQs</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <a href="/projects/bids">
-                            <Briefcase />
-                            <span>Bids</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <a href="/projects/initialization">
-                            <Rocket />
-                            <span>Initialization</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {/* Projects - Single Link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/projects">
+                    <Building2 />
+                    <span>All Projects</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-              {/* Resource Workflow - Collapsible */}
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
-                      <Users />
-                      <span>Resources Workflow</span>
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <a href="/resources/allocation">
-                            <Users />
-                            <span>Allocation</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {/* Resource Workflow */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/resources/allocation">
+                    <Users />
+                    <span>Resources Workflow</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-              {/* WBS - Single Item */}
+              {/* WBS */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a href="/wbs">
@@ -128,7 +62,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Tasks - Single Item */}
+              {/* Tasks */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a href="/tasks">
@@ -138,7 +72,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Reports - Single Item */}
+              {/* Reports */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a href="/reports">
@@ -148,7 +82,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Collaboration - Single Item */}
+              {/* Collaboration */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <a href="/collaboration">
