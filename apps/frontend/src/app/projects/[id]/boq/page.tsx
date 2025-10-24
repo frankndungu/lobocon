@@ -14,6 +14,7 @@ import {
   BarChart3,
   TrendingUp,
   UploadIcon,
+  ChevronRight,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import CreateBillForm from "@/components/forms/CreateBillForm";
@@ -189,6 +190,18 @@ export default function BOQManagement() {
 
   return (
     <DashboardLayout>
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center text-sm text-gray-600 mb-6 font-medium">
+        <button
+          onClick={() => router.push(`/projects/${projectId}`)}
+          className="hover:text-gray-950 transition-colors"
+        >
+          {project?.name || "Project"}
+        </button>
+        <ChevronRight className="w-4 h-4 mx-2" />
+        <span className="text-gray-950">BOQ</span>
+      </div>
+
       {/* Top Section - Project Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between">
@@ -245,7 +258,7 @@ export default function BOQManagement() {
       {/* Action Buttons Row */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          {/* Search Input - NOW WORKING */}
+          {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -334,7 +347,7 @@ export default function BOQManagement() {
         </div>
       )}
 
-      {/* Render View Based on Mode - USING FILTERED BILLS */}
+      {/* Render View Based on Mode */}
       {viewMode === "card" && (
         <BillsCardView
           bills={filteredBills}
