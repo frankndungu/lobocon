@@ -12,12 +12,16 @@ import {
   Plus,
   FileText,
   CheckCircle,
-  Users,
   TrendingUp,
   Zap,
   Shield,
   Globe,
   MessageSquare,
+  Calculator,
+  Percent,
+  BookOpen,
+  Mail,
+  Phone,
 } from "lucide-react";
 import CreateProjectForm from "@/components/forms/CreateProjectForm";
 
@@ -199,7 +203,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Feature 1 */}
+            {/* Feature 1 - Detailed BOQ Management */}
             <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-blue-600" />
@@ -209,67 +213,67 @@ export default function LandingPage() {
               </h3>
               <p className="text-gray-600">
                 Create comprehensive Bills of Quantities with sections, items,
-                and collections. Automatic calculations and totals.
+                and collections. Organize your BOQ with a clear hierarchy.
               </p>
             </div>
 
-            {/* Feature 2 */}
+            {/* Feature 2 - Auto-Calculation */}
             <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+                <Calculator className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-950 mb-3">
+                Automatic Calculations
+              </h3>
+              <p className="text-gray-600">
+                Real-time calculations for quantities, rates, and amounts.
+                Totals update automatically as you work.
+              </p>
+            </div>
+
+            {/* Feature 3 - Contingencies & Management Reserve */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <Percent className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-950 mb-3">
+                Contingencies & Management Reserve
+              </h3>
+              <p className="text-gray-600">
+                Built-in support for contingency percentages and management
+                reserves. Track budget buffers accurately.
+              </p>
+            </div>
+
+            {/* Feature 4 - SMM Integration */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
+                <BookOpen className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-950 mb-3">
+                Integrated SMM Clauses
+              </h3>
+              <p className="text-gray-600">
+                Standard Method of Measurement clauses integrated directly into
+                the platform for professional BOQs.
+              </p>
+            </div>
+
+            {/* Feature 5 - Real-time Cost Tracking */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                <TrendingUp className="w-6 h-6 text-red-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-950 mb-3">
                 Real-time Cost Tracking
               </h3>
               <p className="text-gray-600">
-                Track project budgets, contingencies, and variances in
-                real-time. Know exactly where your money is going.
+                Track project budgets and variances in real-time. Know exactly
+                where your money is going at every stage.
               </p>
             </div>
 
-            {/* Feature 3 */}
-            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Users className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-950 mb-3">
-                Team Collaboration
-              </h3>
-              <p className="text-gray-600">
-                Work together with your team. Share projects, assign tasks, and
-                keep everyone on the same page.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-amber-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-950 mb-3">
-                Lightning Fast
-              </h3>
-              <p className="text-gray-600">
-                Built with modern technology for speed. Create, edit, and manage
-                BOQs without the lag.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-950 mb-3">
-                Secure & Reliable
-              </h3>
-              <p className="text-gray-600">
-                Your data is encrypted and backed up. We take security seriously
-                so you can focus on your projects.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
+            {/* Feature 6 - Access Anywhere */}
             <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
                 <Globe className="w-6 h-6 text-cyan-600" />
@@ -279,7 +283,7 @@ export default function LandingPage() {
               </h3>
               <p className="text-gray-600">
                 Cloud-based platform accessible from any device. Work from the
-                office, site, or home.
+                office, site, or home seamlessly.
               </p>
             </div>
           </div>
@@ -443,15 +447,64 @@ export default function LandingPage() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 py-8 px-6">
+      <footer className="border-t border-gray-200 py-12 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Building className="w-6 h-6 text-gray-950" />
-              <span className="text-lg font-bold text-gray-950">Lobocon</span>
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Building className="w-6 h-6 text-gray-950" />
+                <span className="text-lg font-bold text-gray-950">Lobocon</span>
+              </div>
+              <p className="text-gray-600 text-sm">
+                Simplifying construction project management.
+              </p>
             </div>
-            <p className="text-gray-600 text-sm">
-              © 2025 Lobocon. Built with ❤️ for construction professionals.
+
+            {/* Contact */}
+            <div>
+              <h3 className="font-bold text-gray-950 mb-4">Contact Us</h3>
+              <div className="space-y-3">
+                <a
+                  href="mailto:support@nexaslab.com"
+                  className="flex items-center text-gray-600 hover:text-gray-950 transition-colors group"
+                >
+                  <Mail className="w-4 h-4 mr-2 group-hover:text-blue-600" />
+                  <span className="text-sm">support@nexaslab.com</span>
+                </a>
+                <a
+                  href="tel:+254746884254"
+                  className="flex items-center text-gray-600 hover:text-gray-950 transition-colors group"
+                >
+                  <Phone className="w-4 h-4 mr-2 group-hover:text-green-600" />
+                  <span className="text-sm">+254-746-884-254</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h3 className="font-bold text-gray-950 mb-4">Quick Links</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={scrollToProjects}
+                  className="block text-sm text-gray-600 hover:text-gray-950 transition-colors"
+                >
+                  My Projects
+                </button>
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="block text-sm text-gray-600 hover:text-gray-950 transition-colors"
+                >
+                  Create Project
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-8">
+            <p className="text-gray-600 text-sm text-center">
+              © 2025 Lobocon by Nexaslab. All rights reserved.
             </p>
           </div>
         </div>
